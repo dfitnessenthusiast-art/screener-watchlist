@@ -1,0 +1,36 @@
+name: Screener Daily Auto-Sync
+
+on:
+  schedule:
+    # 11:30 UTC = 5:00 PM IST (Mon-Fri) - Market close daily refresh
+    - cron: '30 11 * * 1-5'
+  workflow_dispatch: # Allows manual click trigger anytime from GitHub Web / Mobile App
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scraper Dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run Daily Screener Sync
+        run: python sync_screener.py
+
+      - name: Commit & Push Fresh Screener Data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add screener_data.json
+          git commit -m "Auto-refresh screener metrics $(date -u +'%Y-%m-%d %H:%M UTC') [skip ci]" || exit 0
+          git push
