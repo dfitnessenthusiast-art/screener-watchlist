@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AlphaWatch • Screener & Dual TradingView Charts</title>
+  
+  <!-- iOS PWA meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AlphaWatch">
+  <meta name="theme-color" content="#070a12">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- TradingView Library -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #070a12;
+      color: #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .safe-top { padding-top: max(16px, env(safe-area-inset-top)); }
+    .safe-bottom { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+    .shake { animation: shake 0.25s ease-in-out 0s 2; }
+  </style>
+</head>
+<body class="min-h-screen safe-top safe-bottom flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
+
+  <!-- ==========================================
+       IN-APP PIN / PASSCODE LOCK OVERLAY (Option A)
+       ========================================== -->
+  <div id="pin-lock-screen" class="fixed inset-0 z-[100] bg-[#070a12] flex flex-col items-center justify-center p-6 select-none">
+    <div class="w-full max-w-xs flex flex-col items-center text-center">
+      <!-- App Logo -->
+      <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-2xl shadow-emerald-500/30 text-slate-950 font-black text-3xl mb-4">
+        α
+      </div>
+      <h2 id="pin-title" class="text-xl font-bold text-white tracking-tight">Enter Passcode</h2>
+      <p id="pin-subtitle" class="text-xs text-slate-400 mt-1">Default PIN is <span class="mono text-emerald-400 font-semibold">1100</span> (or set your own)</p>
+
+      <!-- 4-Dot Indicator -->
+      <div id="pin-dots" class="flex items-center justify-center gap-4 my-7">
+        <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-600 transition-all duration-150"></div>
+        <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-600 transition-all duration-150"></div>
+        <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-600 transition-all duration-150"></div>
+        <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-600 transition-all duration-150"></div>
+      </div>
+
+      <!-- Error / Status Message -->
+      <div id="pin-error" class="h-5 text-xs font-semibold text-rose-400 mb-2"></div>
+
+      <!-- iOS-Style Numeric Keypad -->
+      <div class="grid grid-cols-3 gap-4 w-full max-w-[260px]">
+        <button onclick="pressPin('1')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">1</button>
+        <button onclick="pressPin('2')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">2</button>
+        <button onclick="pressPin('3')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">3</button>
+        <button onclick="pressPin('4')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">4</button>
+        <button onclick="pressPin('5')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">5</button>
+        <button onclick="pressPin('6')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">6</button>
+        <button onclick="pressPin('7')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">7</button>
+        <button onclick="pressPin('8')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">8</button>
+        <button onclick="pressPin('9')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">9</button>
+        <button onclick="clearPin()" class="h-16 rounded-2xl bg-slate-900/50 border border-slate-800 text-xs font-semibold text-slate-400 active:bg-slate-800 transition-all flex items-center justify-center">Clear</button>
+        <button onclick="pressPin('0')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">0</button>
+        <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-900/50 border border-slate-800 text-slate-300 active:bg-slate-800 transition-all flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
+        </button>
+      </div>
+
+      <!-- Remember This iPhone Checkbox -->
+      <label class="mt-6 flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+        <input id="remember-device" type="checkbox" checked class="w-4 h-4 rounded accent-emerald-500">
+        <span>Keep this iPhone unlocked permanently</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MAIN DASHBOARD CONTENT (Unlocked State)
+       ========================================== -->
+  <div id="app-content" class="hidden flex-1 flex flex-col">
+    <!-- Sticky Top Navigation -->
+    <header class="sticky top-0 z-40 px-4 py-3 bg-[#070a12]/92 backdrop-blur-xl border-b border-slate-800/80">
+      <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-xl">
+            α
+          </div>
+          <div>
+            <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              AlphaWatch
+              <span id="badge-count" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">31 Stocks</span>
+            </h1>
+            <p id="last-updated" class="text-[11px] text-slate-400 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Syncing live cloud feeds...
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-1.5">
+          <button onclick="openAddModal()" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md shadow-emerald-500/20 active:scale-95 transition-all">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            <span>Add</span>
+          </button>
+
+          <button onclick="fetchData(true)" title="Force Refresh" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 active:scale-95 transition-all">
+            <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </button>
+
+          <!-- Change PIN / Lock Button -->
+          <button onclick="openPinSettings()" title="PIN & Lock Settings" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 active:scale-95 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Bar & Filters -->
+      <div class="max-w-6xl mx-auto mt-3 space-y-2">
+        <div class="relative">
+          <input id="search-input" oninput="render()" type="text" placeholder="Search by ticker, company, note, or sector..." class="w-full px-4 py-2.5 pl-10 rounded-xl bg-slate-900/90 border border-slate-700/60 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
+          <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs font-medium">
+          <button onclick="setFilter('ALL')" id="filter-ALL" class="filter-btn px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold whitespace-nowrap transition-all shadow-md shadow-emerald-500/20">All</button>
+          <button onclick="setFilter('WAIT')" id="filter-WAIT" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all">⏳ Wait / Review</button>
+          <button onclick="setFilter('HIGH_ROCE')" id="filter-HIGH_ROCE" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all">🔥 ROCE > 22%</button>
+          <button onclick="setFilter('VALUE')" id="filter-VALUE" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all">💎 P/E &lt; 25</button>
+          <button onclick="setFilter('ENG')" id="filter-ENG" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all">Engineering</button>
+          <button onclick="setFilter('PHARMA')" id="filter-PHARMA" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all">Pharma</button>
+          <button onclick="setFilter('GREEN')" id="filter-GREEN" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all">Green Energy</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Summary Metric Ribbon -->
+    <section class="max-w-6xl mx-auto px-4 mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+      <div class="glass p-3 rounded-2xl">
+        <div class="text-[11px] text-slate-400 font-medium">Balu Forge (P/E)</div>
+        <div class="text-xl font-bold text-emerald-400 mono mt-0.5" id="stat-balu-pe">19.1x</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">ROCE: <span id="stat-balu-roce" class="text-slate-300">22.7%</span></div>
+      </div>
+      <div class="glass p-3 rounded-2xl">
+        <div class="text-[11px] text-slate-400 font-medium">Median Watchlist P/E</div>
+        <div class="text-xl font-bold text-white mono mt-0.5" id="stat-avg-pe">26.5x</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Across active stocks</div>
+      </div>
+      <div class="glass p-3 rounded-2xl">
+        <div class="text-[11px] text-slate-400 font-medium">High ROCE (>20%)</div>
+        <div class="text-xl font-bold text-teal-400 mono mt-0.5" id="stat-high-roce">20</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Capital compounders</div>
+      </div>
+      <div class="glass p-3 rounded-2xl">
+        <div class="text-[11px] text-slate-400 font-medium">Under Review / Wait</div>
+        <div class="text-xl font-bold text-amber-400 mono mt-0.5" id="stat-wait-count">6</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Special attention</div>
+      </div>
+    </section>
+
+    <!-- Sort & Controls -->
+    <div class="max-w-6xl mx-auto px-4 mt-4 flex items-center justify-between text-xs text-slate-400 w-full">
+      <span id="stock-count" class="font-medium">Showing 31 stocks</span>
+      <div class="flex items-center gap-3">
+        <button onclick="resetToDefaultPrompt()" class="text-slate-500 hover:text-slate-300 text-[11px] underline">Restore Original 31</button>
+        <div class="flex items-center gap-1.5">
+          <span>Sort:</span>
+          <select id="sort-select" onchange="render()" class="bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+            <option value="ROCE_DESC">Highest ROCE</option>
+            <option value="PE_ASC">Lowest P/E (Value)</option>
+            <option value="PRICE_DESC">Highest Price</option>
+            <option value="MCAP_DESC">Market Cap</option>
+            <option value="NAME_ASC">Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Stocks Grid -->
+    <main class="max-w-6xl mx-auto px-4 mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 w-full flex-1" id="cards-container">
+      <!-- Rendered dynamically -->
+    </main>
+  </div>
+
+  <!-- TradingView Quick-View Modal (15m Delayed Embedded Widget + Direct Zero-Delay Launch Button) -->
+  <div id="chart-modal" class="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6 bg-slate-950/85 backdrop-blur-md hidden">
+    <div class="glass-card w-full max-w-4xl h-[86vh] md:h-[82vh] flex flex-col rounded-3xl border border-slate-700 shadow-2xl overflow-hidden animate-in fade-in duration-200">
+      
+      <!-- Chart Modal Header -->
+      <div class="px-3.5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-900/95">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-amber-400" title="15m Delayed Embed Mode"></div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span id="chart-stock-symbol" class="text-sm md:text-base font-bold text-white mono">BALUFORGE</span>
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">Quick View (15m)</span>
+            </div>
+            <p id="chart-stock-name" class="text-[11px] text-slate-400 truncate max-w-[160px] md:max-w-sm">Balu Forge Industries</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Time Interval Quick Switchers -->
+          <div class="flex items-center bg-slate-800 rounded-lg p-0.5 text-[11px] font-semibold text-slate-300">
+            <button onclick="changeInterval('1')" id="btn-int-1" class="px-2 py-1 rounded hover:text-white">1m</button>
+            <button onclick="changeInterval('5')" id="btn-int-5" class="px-2 py-1 rounded hover:text-white">5m</button>
+            <button onclick="changeInterval('15')" id="btn-int-15" class="px-2 py-1 rounded hover:text-white">15m</button>
+            <button onclick="changeInterval('D')" id="btn-int-D" class="px-2 py-1 rounded bg-emerald-500 text-slate-950 font-bold">1D</button>
+          </div>
+
+          <!-- Direct Zero-Delay Live Launch inside Modal -->
+          <a id="modal-live-tv-link" href="https://www.tradingview.com/chart/?symbol=NSE:BALUFORGE" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-[11px] flex items-center gap-1 shadow-md shadow-sky-500/20 active:scale-95 transition-all whitespace-nowrap">
+            <span>⚡ 0m Live TV</span>
+            <span>↗</span>
+          </a>
+
+          <button onclick="closeChartModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-all">✕</button>
+        </div>
+      </div>
+
+      <!-- TradingView Widget Target Container -->
+      <div class="flex-1 w-full relative bg-[#131722]" id="tradingview_widget_container">
+        <!-- Chart widget rendered here -->
+      </div>
+
+      <!-- Modal Bottom Helper Bar -->
+      <div class="px-4 py-2 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+        <span>Embedded widget has standard 15m NSE delay.</span>
+        <a id="modal-bottom-tv-link" href="https://www.tradingview.com/chart/?symbol=NSE:BALUFORGE" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 font-semibold underline">
+          Open Authenticated Zero-Delay Chart ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Stock Modal -->
+  <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+    <div class="glass-card w-full max-w-md p-5 rounded-3xl border border-slate-700 shadow-2xl relative animate-in fade-in duration-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white">Add Stock to Watchlist</h3>
+          <p class="text-[11px] text-slate-400">Enter ticker or details. Saved directly on your phone.</p>
+        </div>
+        <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+
+      <form onsubmit="handleAddStock(event)" class="mt-4 space-y-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">NSE / BSE Ticker Symbol *</label>
+          <input required id="new-symbol" type="text" placeholder="e.g. TATACHEM, HAL, BEL, CDSL" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono uppercase font-bold focus:outline-none focus:border-emerald-500 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Company Name</label>
+          <input id="new-name" type="text" placeholder="e.g. Tata Chemicals Ltd." class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Current Price (₹)</label>
+            <input id="new-price" type="number" step="any" placeholder="1050" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Stock P/E</label>
+            <input id="new-pe" type="number" step="any" placeholder="18.5" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">ROCE (%)</label>
+            <input id="new-roce" type="number" step="any" placeholder="24.0" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Sector</label>
+            <input id="new-sector" type="text" placeholder="Chemicals / Tech / Auto" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Personal Note / Tag (Optional)</label>
+          <input id="new-note" type="text" placeholder="e.g. Wait for dip, Review next quarter" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Add to Watchlist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PIN & Security Settings Modal -->
+  <div id="pin-settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+    <div class="glass-card w-full max-w-sm p-5 rounded-3xl border border-slate-700 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white">Security & Passcode</h3>
+          <p class="text-[11px] text-slate-400">Customize your 4-digit PIN or lock screen</p>
+        </div>
+        <button onclick="closePinSettings()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Set New 4-Digit PIN</label>
+          <div class="flex gap-2">
+            <input id="custom-pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono text-center text-lg tracking-widest focus:outline-none focus:border-emerald-500">
+            <button onclick="saveNewPin()" class="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs whitespace-nowrap">Save PIN</button>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+          <span class="text-xs text-slate-400">Lock dashboard right now</span>
+          <button onclick="lockNow()" class="px-3.5 py-1.5 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 text-xs font-bold hover:bg-rose-500/25">🔒 Lock Screen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let stockData = {};
+    let activeFilter = 'ALL';
+    let currentChartSymbol = 'BALUFORGE';
+    let currentInterval = 'D';
+    const LOCAL_STORAGE_KEY = 'alphawatch_custom_stocks';
+
+    /* ==========================================
+       PIN LOCK ENGINE (Option A)
+       ========================================== */
+    const PIN_STORAGE_KEY = 'alphawatch_user_pin';
+    const AUTH_TOKEN_KEY = 'alphawatch_device_unlocked';
+    let enteredPin = '';
+
+    function getSavedPin() {
+      return localStorage.getItem(PIN_STORAGE_KEY) || '1100';
+    }
+
+    function checkAuthOnLoad() {
+      const isUnlocked = localStorage.getItem(AUTH_TOKEN_KEY) === 'true';
+      if (isUnlocked) {
+        unlockDashboard();
+      } else {
+        document.getElementById('pin-lock-screen').classList.remove('hidden');
+        document.getElementById('app-content').classList.add('hidden');
+      }
+    }
+
+    function pressPin(digit) {
+      if (enteredPin.length >= 4) return;
+      enteredPin += digit;
+      document.getElementById('pin-error').innerText = '';
+      updatePinDots();
+
+      if (enteredPin.length === 4) {
+        setTimeout(verifyPin, 120);
+      }
+    }
+
+    function backspacePin() {
+      enteredPin = enteredPin.slice(0, -1);
+      updatePinDots();
+    }
+
+    function clearPin() {
+      enteredPin = '';
+      updatePinDots();
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll('.pin-dot');
+      dots.forEach((dot, idx) => {
+        if (idx < enteredPin.length) {
+          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-emerald-400 scale-110 transition-all duration-150 shadow-sm shadow-emerald-500/50';
+        } else {
+          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-600 transition-all duration-150';
+        }
+      });
+    }
+
+    function verifyPin() {
+      const targetPin = getSavedPin();
+      if (enteredPin === targetPin) {
+        const remember = document.getElementById('remember-device').checked;
+        if (remember) {
+          localStorage.setItem(AUTH_TOKEN_KEY, 'true');
+        }
+        unlockDashboard();
+      } else {
+        const dotsContainer = document.getElementById('pin-dots');
+        dotsContainer.classList.add('shake');
+        document.getElementById('pin-error').innerText = 'Incorrect Passcode';
+        setTimeout(() => {
+          dotsContainer.classList.remove('shake');
+          clearPin();
+        }, 400);
+      }
+    }
+
+    function unlockDashboard() {
+      document.getElementById('pin-lock-screen').classList.add('hidden');
+      document.getElementById('app-content').classList.remove('hidden');
+      clearPin();
+      fetchData(false);
+    }
+
+    function openPinSettings() {
+      document.getElementById('pin-settings-modal').classList.remove('hidden');
+    }
+
+    function closePinSettings() {
+      document.getElementById('pin-settings-modal').classList.add('hidden');
+    }
+
+    function saveNewPin() {
+      const val = (document.getElementById('custom-pin-input').value || '').trim();
+      if (!/^\d{4}$/.test(val)) {
+        alert('Please enter a valid 4-digit numeric PIN.');
+        return;
+      }
+      localStorage.setItem(PIN_STORAGE_KEY, val);
+      document.getElementById('custom-pin-input').value = '';
+      closePinSettings();
+      alert('Your new 4-digit PIN has been saved!');
+    }
+
+    function lockNow() {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      closePinSettings();
+      document.getElementById('app-content').classList.add('hidden');
+      document.getElementById('pin-lock-screen').classList.remove('hidden');
+    }
+
+    // Support keyboard numeric typing on desktop
+    window.addEventListener('keydown', (e) => {
+      const lockScreenVisible = !document.getElementById('pin-lock-screen').classList.contains('hidden');
+      if (!lockScreenVisible) return;
+      if (e.key >= '0' && e.key <= '9') pressPin(e.key);
+      if (e.key === 'Backspace') backspacePin();
+      if (e.key === 'Escape') clearPin();
+    });
+
+    /* ==========================================
+       CORE WATCHLIST & DATA ENGINE
+       ========================================== */
+    async function fetchData(force = false) {
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      try {
+        const res = await fetch('./screener_data.json?v=' + Date.now());
+        if (!res.ok) throw new Error("Cloud fetch failed");
+        const json = await res.json();
+        
+        let merged = json.stocks || {};
+        const savedCustom = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedCustom) {
+          try {
+            const userMod = JSON.parse(savedCustom);
+            if (userMod.deleted && Array.isArray(userMod.deleted)) {
+              userMod.deleted.forEach(delSym => {
+                delete merged[delSym];
+              });
+            }
+            if (userMod.added) {
+              merged = { ...merged, ...userMod.added };
+            }
+          } catch(err) {
+            console.error("Error reading localStorage customizations:", err);
+          }
+        }
+        stockData = merged;
+        document.getElementById('last-updated').innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          Auto-synced: ${json.lastUpdated || "Cloud daily"}
+        `;
+      } catch (e) {
+        console.warn("Falling back to local cache:", e);
+        const savedCustom = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedCustom) {
+          try {
+            stockData = JSON.parse(savedCustom).added || {};
+          } catch (err){}
+        }
+        document.getElementById('last-updated').innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          Offline cached view active
+        `;
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+        render();
+        updateSummary();
+      }
+    }
+
+    function openChartModal(symbol, name) {
+      currentChartSymbol = symbol;
+      document.getElementById('chart-stock-symbol').innerText = symbol;
+      document.getElementById('chart-stock-name').innerText = name || symbol;
+
+      const liveUrl = `https://www.tradingview.com/chart/?symbol=NSE:${symbol}`;
+      document.getElementById('modal-live-tv-link').href = liveUrl;
+      document.getElementById('modal-bottom-tv-link').href = liveUrl;
+
+      document.getElementById('chart-modal').classList.remove('hidden');
+      loadTradingViewWidget(symbol, currentInterval);
+    }
+
+    function closeChartModal() {
+      document.getElementById('chart-modal').classList.add('hidden');
+      document.getElementById('tradingview_widget_container').innerHTML = '';
+    }
+
+    function changeInterval(interval) {
+      currentInterval = interval;
+      ['1', '5', '15', 'D'].forEach(int => {
+        const btn = document.getElementById('btn-int-' + int);
+        if (btn) {
+          if (int === interval) {
+            btn.className = "px-2 py-1 rounded bg-emerald-500 text-slate-950 font-bold";
+          } else {
+            btn.className = "px-2 py-1 rounded hover:text-white";
+          }
+        }
+      });
+      loadTradingViewWidget(currentChartSymbol, interval);
+    }
+
+    function loadTradingViewWidget(symbol, interval) {
+      const container = document.getElementById('tradingview_widget_container');
+      container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
+
+      const tvSymbol = `NSE:${symbol}`;
+
+      if (typeof TradingView !== 'undefined') {
+        new TradingView.widget({
+          "autosize": true,
+          "symbol": tvSymbol,
+          "interval": interval,
+          "timezone": "Asia/Kolkata",
+          "theme": "dark",
+          "style": "1",
+          "locale": "en",
+          "toolbar_bg": "#131722",
+          "enable_publishing": false,
+          "allow_symbol_change": true,
+          "save_image": false,
+          "container_id": "tv_chart_inner",
+          "hide_side_toolbar": false,
+          "studies": [
+            "Volume@tv-basicstudies",
+            "MASimple@tv-basicstudies"
+          ]
+        });
+      } else {
+        container.innerHTML = `
+          <div class="flex items-center justify-center h-full text-center p-6 text-slate-400 text-xs">
+            Connecting to TradingView... If chart fails to load, check network connection.
+          </div>
+        `;
+      }
+    }
+
+    function saveCustomizations(addedItem = null, deletedSym = null) {
+      let currentMod = { added: {}, deleted: [] };
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        try { currentMod = JSON.parse(saved); } catch(e){}
+      }
+      if (!currentMod.added) currentMod.added = {};
+      if (!currentMod.deleted) currentMod.deleted = [];
+
+      if (deletedSym) {
+        delete currentMod.added[deletedSym];
+        if (!currentMod.deleted.includes(deletedSym)) {
+          currentMod.deleted.push(deletedSym);
+        }
+      }
+
+      if (addedItem) {
+        currentMod.deleted = currentMod.deleted.filter(s => s !== addedItem.symbol);
+        currentMod.added[addedItem.symbol] = addedItem;
+      }
+
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentMod));
+    }
+
+    function deleteStock(symbol, name) {
+      if (confirm(`Remove ${symbol} (${name || ''}) from your watchlist?`)) {
+        delete stockData[symbol];
+        saveCustomizations(null, symbol);
+        render();
+        updateSummary();
+      }
+    }
+
+    function openAddModal() {
+      document.getElementById('add-modal').classList.remove('hidden');
+      document.getElementById('new-symbol').focus();
+    }
+
+    function closeAddModal() {
+      document.getElementById('add-modal').classList.add('hidden');
+    }
+
+    function handleAddStock(e) {
+      e.preventDefault();
+      const sym = document.getElementById('new-symbol').value.toUpperCase().trim();
+      if (!sym) return;
+
+      const newStock = {
+        symbol: sym,
+        name: document.getElementById('new-name').value.trim() || sym,
+        sector: document.getElementById('new-sector').value.trim() || "Equity",
+        note: document.getElementById('new-note').value.trim() || "",
+        price: parseFloat(document.getElementById('new-price').value) || null,
+        pe: parseFloat(document.getElementById('new-pe').value) || null,
+        roce: parseFloat(document.getElementById('new-roce').value) || null,
+        roe: null,
+        marketCap: null,
+        bookValue: null,
+        status: "active"
+      };
+
+      stockData[sym] = newStock;
+      saveCustomizations(newStock, null);
+      closeAddModal();
+      e.target.reset();
+      render();
+      updateSummary();
+    }
+
+    function resetToDefaultPrompt() {
+      if (confirm("Restore the original 31 stocks and clear custom additions/removals?")) {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        fetchData(true);
+      }
+    }
+
+    function setFilter(filter) {
+      activeFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.className = 'filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 whitespace-nowrap hover:bg-slate-700 transition-all';
+      });
+      const activeEl = document.getElementById('filter-' + filter);
+      if (activeEl) {
+        activeEl.className = 'filter-btn px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold whitespace-nowrap transition-all shadow-md shadow-emerald-500/20';
+      }
+      render();
+    }
+
+    function updateSummary() {
+      const list = Object.values(stockData);
+      document.getElementById('badge-count').innerText = `${list.length} Stocks`;
+
+      const balu = stockData['BALUFORGE'];
+      if (balu) {
+        document.getElementById('stat-balu-pe').innerText = (balu.pe ? balu.pe + 'x' : '19.1x');
+        document.getElementById('stat-balu-roce').innerText = (balu.roce ? balu.roce + '%' : '22.7%');
+      }
+
+      const validPe = list.filter(s => s.pe && s.pe > 0);
+      const avgPe = validPe.reduce((acc, cur) => acc + cur.pe, 0) / (validPe.length || 1);
+      document.getElementById('stat-avg-pe').innerText = avgPe.toFixed(1) + 'x';
+
+      const highRoce = list.filter(s => s.roce && s.roce >= 20).length;
+      document.getElementById('stat-high-roce').innerText = `${highRoce} / ${list.length}`;
+
+      const waitCount = list.filter(s => s.note && s.note.length > 0).length;
+      document.getElementById('stat-wait-count').innerText = waitCount;
+    }
+
+    function render() {
+      const container = document.getElementById('cards-container');
+      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+      const sortVal = document.getElementById('sort-select').value;
+
+      let list = Object.values(stockData);
+
+      if (query) {
+        list = list.filter(s => 
+          (s.symbol && s.symbol.toLowerCase().includes(query)) || 
+          (s.name && s.name.toLowerCase().includes(query)) || 
+          (s.sector && s.sector.toLowerCase().includes(query)) ||
+          (s.note && s.note.toLowerCase().includes(query))
+        );
+      }
+
+      if (activeFilter === 'WAIT') {
+        list = list.filter(s => s.note && s.note.length > 0);
+      } else if (activeFilter === 'HIGH_ROCE') {
+        list = list.filter(s => s.roce && s.roce >= 22);
+      } else if (activeFilter === 'VALUE') {
+        list = list.filter(s => s.pe && s.pe <= 25);
+      } else if (activeFilter === 'ENG') {
+        list = list.filter(s => s.sector && (s.sector.includes('Engineering') || s.sector.includes('Capital Goods') || s.sector.includes('Infrastructure')));
+      } else if (activeFilter === 'PHARMA') {
+        list = list.filter(s => s.sector && (s.sector.includes('Pharma') || s.sector.includes('Healthcare')));
+      } else if (activeFilter === 'GREEN') {
+        list = list.filter(s => s.sector && (s.sector.includes('Renewable') || s.sector.includes('Solar') || s.sector.includes('Green')));
+      }
+
+      list.sort((a, b) => {
+        if (sortVal === 'ROCE_DESC') return (b.roce || 0) - (a.roce || 0);
+        if (sortVal === 'PE_ASC') return (a.pe || 999) - (b.pe || 999);
+        if (sortVal === 'PRICE_DESC') return (b.price || 0) - (a.price || 0);
+        if (sortVal === 'MCAP_DESC') return (b.marketCap || 0) - (a.marketCap || 0);
+        if (sortVal === 'NAME_ASC') return (a.name || '').localeCompare(b.name || '');
+        return 0;
+      });
+
+      document.getElementById('stock-count').innerText = `Showing ${list.length} of ${Object.keys(stockData).length} stocks`;
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-500 text-sm glass rounded-2xl">
+            <p>No stocks matching your criteria</p>
+            <button onclick="openAddModal()" class="mt-3 px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-500/20">
+              + Add a new stock now
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(s => {
+        const noteBadge = s.note ? `
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            ${s.note}
+          </span>
+        ` : '';
+
+        const roceColor = (s.roce && s.roce >= 25) ? 'text-emerald-400' : (s.roce && s.roce >= 18) ? 'text-teal-300' : 'text-slate-300';
+        const peColor = (s.pe && s.pe <= 22) ? 'text-emerald-400' : (s.pe && s.pe <= 35) ? 'text-slate-200' : 'text-amber-400';
+        const liveTvUrl = `https://www.tradingview.com/chart/?symbol=NSE:${s.symbol}`;
+
+        return `
+          <div class="glass-card p-4 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all group relative">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1 min-w-0 pr-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-white text-base tracking-tight mono">${s.symbol}</span>
+                    ${noteBadge}
+                  </div>
+                  <h2 class="text-xs font-medium text-slate-300 mt-0.5 truncate">${s.name || s.symbol}</h2>
+                </div>
+
+                <!-- Price, Quick-View Chart Icon, Zero-Delay TV Icon & Delete Button -->
+                <div class="flex items-center gap-1.5">
+                  <div class="text-right mr-1">
+                    <div class="text-sm font-bold text-white mono">₹${s.price ? s.price.toLocaleString('en-IN') : '--'}</div>
+                    <div class="text-[10px] text-slate-500 font-medium">CMP</div>
+                  </div>
+
+                  <!-- Option 1: Quick Chart (In-App 15m Popup) -->
+                  <button onclick="openChartModal('${s.symbol}', '${(s.name || '').replace(/'/g, "\'")}')" title="Quick Chart (In-App 15m)" class="p-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center active:scale-90 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                  </button>
+
+                  <!-- Option 2: Zero-Delay Live TradingView App/Web Launch -->
+                  <a href="${liveTvUrl}" target="_blank" rel="noopener noreferrer" title="Zero-Delay Live TradingView (App / Web)" class="p-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 flex items-center justify-center active:scale-90 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  </a>
+
+                  <!-- Delete Button -->
+                  <button onclick="deleteStock('${s.symbol}', '${(s.name || '').replace(/'/g, "\'")}')" title="Delete stock" class="p-1.5 rounded-lg bg-slate-800/60 hover:bg-rose-500/20 hover:text-rose-400 text-slate-500 flex items-center justify-center active:scale-90 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="text-[11px] text-slate-400 mt-2 bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-800/80 inline-block truncate max-w-full">
+                ${s.sector || 'General'}
+              </div>
+
+              <!-- Key Metrics Grid -->
+              <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-800/80 text-center">
+                <div class="bg-slate-900/40 p-2 rounded-xl">
+                  <div class="text-[10px] text-slate-500 font-medium">Stock P/E</div>
+                  <div class="text-xs font-bold ${peColor} mono mt-0.5">${s.pe ? s.pe + 'x' : '--'}</div>
+                </div>
+                <div class="bg-slate-900/40 p-2 rounded-xl">
+                  <div class="text-[10px] text-slate-500 font-medium">ROCE</div>
+                  <div class="text-xs font-bold ${roceColor} mono mt-0.5">${s.roce ? s.roce + '%' : '--'}</div>
+                </div>
+                <div class="bg-slate-900/40 p-2 rounded-xl">
+                  <div class="text-[10px] text-slate-500 font-medium">Market Cap</div>
+                  <div class="text-xs font-bold text-slate-200 mono mt-0.5">₹${s.marketCap ? (s.marketCap >= 1000 ? (s.marketCap/1000).toFixed(1) + 'k' : s.marketCap) + 'Cr' : '--'}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Dual Action Bar: Quick View (15m) + Live TV (0m) + Screener -->
+            <div class="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[11px]">
+              <span class="text-slate-500">ROE: <strong class="text-slate-300">${s.roe ? s.roe + '%' : '--'}</strong></span>
+              <div class="flex items-center gap-2">
+                <button onclick="openChartModal('${s.symbol}', '${(s.name || '').replace(/'/g, "\'")}')" class="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-0.5 active:opacity-75">
+                  <span>📊 Quick (15m)</span>
+                </button>
+                <span class="text-slate-700">•</span>
+                <a href="${liveTvUrl}" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-0.5 active:opacity-75">
+                  <span>⚡ Live TV (0m) ↗</span>
+                </a>
+                <span class="text-slate-700">•</span>
+                <a href="https://www.screener.in/company/${s.symbol}/consolidated/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-slate-200 font-medium active:opacity-75">
+                  Screener ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => checkAuthOnLoad());
+  </script>
+</body>
+</html>
