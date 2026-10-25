@@ -580,7 +580,7 @@ let activeChartInstance = null;
         const wrapper = document.getElementById('tv_canvas_wrapper');
         if (!wrapper) return;
 
-        // Create the native HTML5 Canvas Chart using TradingView's open-source library
+        // Create the native HTML5 Canvas Chart
         const chart = LightweightCharts.createChart(wrapper, {
           width: wrapper.clientWidth || container.clientWidth || 600,
           height: 400,
@@ -602,7 +602,8 @@ let activeChartInstance = null;
 
         activeChartInstance = chart;
 
-        const candlestickSeries = chart.addCandlestickSeries({
+        // Use compatible v5 series creation method
+        const candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
           upColor: '#10b981',
           downColor: '#f43f5e',
           borderVisible: false,
@@ -643,7 +644,6 @@ let activeChartInstance = null;
         chart.timeScale().fitContent();
       }, 50);
     }
-    
     function saveCustomizations(addedItem = null, deletedSym = null) {
       let currentMod = { added: {}, deleted: [] };
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
