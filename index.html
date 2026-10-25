@@ -561,9 +561,9 @@ let activeChartInstance = null;
 
     function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
+      container.style.height = '420px';
       
-      // Inject container wrapper with guaranteed fixed layout dimensions
-      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:400px; position:relative; background:#131722;"></div>`;
+      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:420px; position:relative; background:#131722;"></div>`;
 
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
       let currentStock = stockData[cleanSymbol] || stockData[symbol] || { price: 1000 };
@@ -612,48 +612,42 @@ let activeChartInstance = null;
         last.low = Math.min(last.low, basePrice);
       }
 
-      // Use requestAnimationFrame to guarantee the modal is rendered and dimensions are valid
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          const wrapper = document.getElementById('tv_canvas_wrapper');
-          if (!wrapper) return;
+      setTimeout(() => {
+        const wrapper = document.getElementById('tv_canvas_wrapper');
+        if (!wrapper) return;
 
-          const chartWidth = wrapper.clientWidth || container.clientWidth || 700;
-          const chartHeight = wrapper.clientHeight || 400;
+        const chart = LightweightCharts.createChart(wrapper, {
+          width: wrapper.clientWidth || 700,
+          height: 420,
+          layout: {
+            background: { type: 'solid', color: '#131722' },
+            textColor: '#94a3b8',
+          },
+          grid: {
+            vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+            horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+          },
+          timeScale: {
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+          },
+          rightPriceScale: {
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+          },
+        });
 
-          const chart = LightweightCharts.createChart(wrapper, {
-            width: chartWidth,
-            height: chartHeight,
-            layout: {
-              background: { type: 'solid', color: '#131722' },
-              textColor: '#94a3b8',
-            },
-            grid: {
-              vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
-              horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
-            },
-            timeScale: {
-              borderColor: 'rgba(255, 255, 255, 0.1)',
-            },
-            rightPriceScale: {
-              borderColor: 'rgba(255, 255, 255, 0.1)',
-            },
-          });
+        activeChartInstance = chart;
 
-          activeChartInstance = chart;
+        const candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+          upColor: '#10b981',
+          downColor: '#f43f5e',
+          borderVisible: false,
+          wickUpColor: '#10b981',
+          wickDownColor: '#f43f5e',
+        });
 
-          const candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-            upColor: '#10b981',
-            downColor: '#f43f5e',
-            borderVisible: false,
-            wickUpColor: '#10b981',
-            wickDownColor: '#f43f5e',
-          });
-
-          candlestickSeries.setData(candleData);
-          chart.timeScale().fitContent();
-        }, 60);
-      });
+        candlestickSeries.setData(candleData);
+        chart.timeScale().fitContent();
+      }, 50);
     }
     
     function saveCustomizations(addedItem = null, deletedSym = null) {
