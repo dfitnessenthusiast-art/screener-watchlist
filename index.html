@@ -274,14 +274,31 @@
       </div>
 
       <form onsubmit="handleAddStock(event)" class="mt-4 space-y-3">
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">NSE / BSE Ticker Symbol *</label>
-          <input required id="new-symbol" type="text" placeholder="e.g. TATACHEM, HAL, BEL, CDSL" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono uppercase font-bold focus:outline-none focus:border-emerald-500 text-sm">
+        
+        <!-- NEW: Live Search Field -->
+        <div class="relative z-50">
+          <label class="block text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            Live Search Company
+          </label>
+          <input id="new-symbol-search" type="text" oninput="onLiveSearchInput(this.value)" autocomplete="off" placeholder="Start typing e.g. Reliance, Tata, BEL..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-white font-medium focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 text-sm transition-all shadow-lg shadow-emerald-900/10">
+          
+          <!-- Live Search Autocomplete Dropdown Results -->
+          <div id="search-suggestions" class="absolute left-0 right-0 top-[66px] bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-h-52 overflow-y-auto hidden divide-y divide-slate-700/80">
+            <!-- Populated dynamically via JS -->
+          </div>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Company Name</label>
-          <input id="new-name" type="text" placeholder="e.g. Tata Chemicals Ltd." class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
+        <!-- Auto-filled Ticker & Name -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Ticker Symbol *</label>
+            <input required id="new-symbol" type="text" placeholder="e.g. TATACHEM" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono uppercase font-bold focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Company Name</label>
+            <input id="new-name" type="text" placeholder="e.g. Tata Chemicals Ltd." class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -313,9 +330,7 @@
 
         <div class="pt-2 flex items-center justify-end gap-2">
           <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Add to Watchlist</button>
-        </div>
-      </form>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow
     </div>
   </div>
 
@@ -932,6 +947,76 @@
         `;
       }).join('');
     }
+
+    let searchDebounceTimer = null;
+
+    async function onLiveSearchInput(query) {
+      clearTimeout(searchDebounceTimer);
+      const dropdown = document.getElementById('search-suggestions');
+      
+      if (!query || query.trim().length < 2) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      // Debounce requests by 300ms to avoid spamming the API
+      searchDebounceTimer = setTimeout(async () => {
+        try {
+          // Yahoo Finance Search API (Works seamlessly from client browsers)
+          const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query.trim())}&quotesCount=8&country=India`;
+          const res = await fetch(searchUrl);
+          if (!res.ok) throw new Error('Search failed');
+          
+          const data = await res.json();
+          
+          // Filter exclusively for Indian equities (.NS / .BO)
+          const results = (data.quotes || []).filter(q => q.symbol && (q.symbol.endsWith('.NS') || q.symbol.endsWith('.BO')));
+
+          if (results.length === 0) {
+            dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No matching Indian stocks found</div>`;
+            dropdown.classList.remove('hidden');
+            return;
+          }
+
+          dropdown.innerHTML = results.map(item => {
+            const cleanSym = item.symbol.replace('.NS', '').replace('.BO', '');
+            const exchange = item.symbol.endsWith('.NS') ? 'NSE' : 'BSE';
+            const name = (item.longname || item.shortname || '').replace(/'/g, "\\'");
+            
+            return `
+              <div onclick="selectStockSuggestion('${cleanSym}', '${name}')" class="p-3 hover:bg-slate-700 cursor-pointer flex items-center justify-between transition-all group">
+                <div>
+                  <div class="font-bold text-white text-xs group-hover:text-emerald-400 transition-colors">${item.longname || item.shortname}</div>
+                  <div class="text-[10px] text-slate-400 mono mt-0.5">${cleanSym} <span class="bg-slate-800 px-1 rounded ml-1 text-[9px] border border-slate-700">${exchange}</span></div>
+                </div>
+                <span class="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Select ↗</span>
+              </div>
+            `;
+          }).join('');
+          
+          dropdown.classList.remove('hidden');
+        } catch (err) {
+          console.warn("Live search error:", err);
+        }
+      }, 300);
+    }
+
+    function selectStockSuggestion(symbol, name) {
+      document.getElementById('new-symbol-search').value = name;
+      document.getElementById('new-symbol').value = symbol;
+      document.getElementById('new-name').value = name;
+      document.getElementById('search-suggestions').classList.add('hidden');
+    }
+
+    // Collapse the dropdown if user clicks outside
+    window.addEventListener('click', (e) => {
+      const searchBox = document.getElementById('new-symbol-search');
+      const dropdown = document.getElementById('search-suggestions');
+      if (searchBox && dropdown && !searchBox.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
 
     window.addEventListener('DOMContentLoaded', () => checkAuthOnLoad());
   </script>
