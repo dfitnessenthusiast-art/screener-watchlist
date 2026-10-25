@@ -555,35 +555,37 @@
     }
 
     function loadTradingViewWidget(symbol, interval) {
-    const container = document.getElementById('tradingview_widget_container');
-    container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
+      const container = document.getElementById('tradingview_widget_container');
+      container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
 
-    // Clean and normalize ticker for TradingView widget
-    let cleanSymbol = symbol.replace("NSE:", "").trim();
-    
-    // Some Indian stocks on TradingView use BSE or exact ticker aliases
-    // Let's ensure standard NSE format or fallback map if needed
-    let formattedSymbol = `NSE:${cleanSymbol}`;
+      // Clean symbol and map common variations if needed
+      let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
+      
+      // Some major stocks or specific tickers resolve more reliably on TradingView with NSE: prefix
+      let formattedSymbol = `NSE:${cleanSymbol}`;
 
-    const tvConfig = {
-        "autosize": true,
-        "symbol": formattedSymbol,
-        "interval": interval,
-        "timezone": "Asia/Kolkata",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#f1f3f6",
-        "enable_publishing": false,
-        "hide_top_toolbar": false,
-        "container_id": "tv_chart_inner"
-    };
+      const tvConfig = {
+          "autosize": true,
+          "symbol": formattedSymbol,
+          "interval": interval,
+          "timezone": "Asia/Kolkata",
+          "theme": "dark",
+          "style": "1",
+          "locale": "en",
+          "toolbar_bg": "#f1f3f6",
+          "enable_publishing": false,
+          "hide_top_toolbar": false,
+          "container_id": "tv_chart_inner",
+          "allow_symbol_change": true,
+          "details": false,
+          "hotlist": false,
+          "calendar": false
+      };
 
-    if (typeof TradingView !== 'undefined') {
-        new TradingView.widget(tvConfig);
+      if (typeof TradingView !== 'undefined') {
+          new TradingView.widget(tvConfig);
+      }
     }
-}
-    
     function saveCustomizations(addedItem = null, deletedSym = null) {
       let currentMod = { added: {}, deleted: [] };
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
