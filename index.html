@@ -558,8 +558,12 @@
     const container = document.getElementById('tradingview_widget_container');
     container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
 
-    // Ensure proper exchange prefix for Indian equities
-    let formattedSymbol = symbol.includes(":") ? symbol : `NSE:${symbol}`;
+    // Clean and normalize ticker for TradingView widget
+    let cleanSymbol = symbol.replace("NSE:", "").trim();
+    
+    // Some Indian stocks on TradingView use BSE or exact ticker aliases
+    // Let's ensure standard NSE format or fallback map if needed
+    let formattedSymbol = `NSE:${cleanSymbol}`;
 
     const tvConfig = {
         "autosize": true,
