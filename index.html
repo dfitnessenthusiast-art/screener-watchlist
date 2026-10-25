@@ -555,40 +555,31 @@
     }
 
     function loadTradingViewWidget(symbol, interval) {
-      const container = document.getElementById('tradingview_widget_container');
-      container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
+    const container = document.getElementById('tradingview_widget_container');
+    container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
 
-      const tvSymbol = `NSE:${symbol}`;
+    // Ensure proper exchange prefix for Indian equities
+    let formattedSymbol = symbol.includes(":") ? symbol : `NSE:${symbol}`;
 
-      if (typeof TradingView !== 'undefined') {
-        new TradingView.widget({
-          "autosize": true,
-          "symbol": tvSymbol,
-          "interval": interval,
-          "timezone": "Asia/Kolkata",
-          "theme": "dark",
-          "style": "1",
-          "locale": "en",
-          "toolbar_bg": "#131722",
-          "enable_publishing": false,
-          "allow_symbol_change": true,
-          "save_image": false,
-          "container_id": "tv_chart_inner",
-          "hide_side_toolbar": false,
-          "studies": [
-            "Volume@tv-basicstudies",
-            "MASimple@tv-basicstudies"
-          ]
-        });
-      } else {
-        container.innerHTML = `
-          <div class="flex items-center justify-center h-full text-center p-6 text-slate-400 text-xs">
-            Connecting to TradingView... If chart fails to load, check network connection.
-          </div>
-        `;
-      }
+    const tvConfig = {
+        "autosize": true,
+        "symbol": formattedSymbol,
+        "interval": interval,
+        "timezone": "Asia/Kolkata",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "container_id": "tv_chart_inner"
+    };
+
+    if (typeof TradingView !== 'undefined') {
+        new TradingView.widget(tvConfig);
     }
-
+}
+    
     function saveCustomizations(addedItem = null, deletedSym = null) {
       let currentMod = { added: {}, deleted: [] };
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
