@@ -561,26 +561,21 @@ let activeChartInstance = null;
     function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
       
-      // Ensure the container has an explicit dark background and fixed height for the canvas
       container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:400px; position:relative; background:#131722;"></div>`;
 
-      // Clean symbol name & get current price from your app's data
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
       let currentStock = stockData[cleanSymbol] || stockData[symbol] || { price: 1000 };
       let basePrice = currentStock.price || 1000;
 
-      // Clean up previous chart instance
       if (activeChartInstance) {
         activeChartInstance.remove();
         activeChartInstance = null;
       }
 
-      // Small delay to ensure DOM layout is painted
       setTimeout(() => {
         const wrapper = document.getElementById('tv_canvas_wrapper');
         if (!wrapper) return;
 
-        // Create the native HTML5 Canvas Chart
         const chart = LightweightCharts.createChart(wrapper, {
           width: wrapper.clientWidth || container.clientWidth || 600,
           height: 400,
@@ -602,7 +597,6 @@ let activeChartInstance = null;
 
         activeChartInstance = chart;
 
-        // Use compatible v5 series creation method
         const candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
           upColor: '#10b981',
           downColor: '#f43f5e',
@@ -611,21 +605,26 @@ let activeChartInstance = null;
           wickDownColor: '#f43f5e',
         });
 
-        // Generate clean historical candles leading up to current Screener CMP
+        // Generate realistic swing trend data leading up to current Screener CMP
         let mockData = [];
-        let price = basePrice * 0.90;
+        let days = 60;
+        let price = basePrice * 0.88; // start slightly lower to show compounding trend
         let now = new Date();
-        now.setDate(now.getDate() - 50);
+        now.setDate(now.getDate() - days);
 
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < days; i++) {
           now.setDate(now.getDate() + 1);
           let timeStr = now.toISOString().split('T')[0];
-          let variance = (Math.random() - 0.49) * (basePrice * 0.015);
+          
+          // Use sine wave + controlled variance for realistic market waves
+          let wave = Math.sin(i / 6) * (basePrice * 0.015);
+          let noise = (Math.random() - 0.48) * (basePrice * 0.012);
           let open = price;
-          let close = open + variance;
-          let high = Math.max(open, close) + Math.random() * (basePrice * 0.005);
-          let low = Math.min(open, close) - Math.random() * (basePrice * 0.005);
+          let close = open + wave + noise;
+          let high = Math.max(open, close) + Math.random() * (basePrice * 0.007);
+          let low = Math.min(open, close) - Math.random() * (basePrice * 0.007);
           price = close;
+
           mockData.push({ 
             time: timeStr, 
             open: parseFloat(open.toFixed(2)), 
@@ -635,15 +634,19 @@ let activeChartInstance = null;
           });
         }
 
-        // Lock final candle to current live Screener CMP
+        // Anchor the final candle precisely to live Screener CMP
         if (mockData.length > 0) {
-          mockData[mockData.length - 1].close = basePrice;
+          let last = mockData[mockData.length - 1];
+          last.close = basePrice;
+          last.high = Math.max(last.high, basePrice);
+          last.low = Math.min(last.low, basePrice);
         }
 
         candlestickSeries.setData(mockData);
         chart.timeScale().fitContent();
       }, 50);
     }
+    
     function saveCustomizations(addedItem = null, deletedSym = null) {
       let currentMod = { added: {}, deleted: [] };
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
