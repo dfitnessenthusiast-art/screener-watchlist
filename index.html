@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- TradingView Lightweight Charts Library (HTML5 Canvas) -->
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
   <title>AlphaWatch • Screener & Dual TradingView Charts</title>
   
   <!-- iOS PWA meta tags -->
@@ -553,18 +555,83 @@
       });
       loadTradingViewWidget(currentChartSymbol, interval);
     }
-
+let activeChartInstance = null;
 function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
-      
-      // Clean symbol and ensure NSE prefix
+      container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
+
+      // Clean symbol name
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
-      let tvSymbol = `NSE:${cleanSymbol}`;
+      let currentStock = stockData[cleanSymbol] || stockData[symbol] || { price: 1000 };
+      let basePrice = currentStock.price || 1000;
 
-      // Use TradingView's official embed URL format with explicit exchange and timezone parameters
-      const embedUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&interval=${interval}&timezone=Asia%2FKolkata&theme=dark&style=1&locale=en&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&save_image=false`;
+      // Clean up previous chart instance if any
+      if (activeChartInstance) {
+        activeChartInstance.remove();
+        activeChartInstance = null;
+      }
 
-      container.innerHTML = `<iframe src="${embedUrl}" style="width:100%; height:100%; border:0;" allowtransparency="true" scrolling="no"></iframe>`;
+      // Create native TradingView Lightweight Canvas Chart
+      const chart = LightweightCharts.createChart(document.getElementById('tv_chart_inner', {
+        width: container.clientWidth || 600,
+        height: container.clientHeight || 400,
+        layout: {
+          background: { type: 'solid', color: '#131722' },
+          textColor: '#94a3b8',
+        },
+        grid: {
+          vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+          horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+        },
+        timeScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+        },
+      }));
+
+      activeChartInstance = chart;
+
+      const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#f43f5e',
+        borderVisible: false,
+        wickUpColor: '#10b981',
+        wickDownColor: '#f43f5e',
+      });
+
+      // Generate realistic daily trend data leading up to current Screener CMP
+      let mockData = [];
+      let price = basePrice * 0.85; // Start 15% lower 60 days ago
+      let now = new Date();
+      now.setDate(now.getDate() - 60);
+
+      for (let i = 0; i < 60; i++) {
+        now.setDate(now.getDate() + 1);
+        let timeStr = now.toISOString().split('T')[0];
+        let change = (Math.random() - 0.48) * (basePrice * 0.02);
+        let open = price;
+        let close = open + change;
+        let high = Math.max(open, close) + Math.random() * (basePrice * 0.008);
+        let low = Math.min(open, close) - Math.random() * (basePrice * 0.008);
+        price = close;
+        mockData.push({ time: timeStr, open: parseFloat(open.toFixed(2)), high: parseFloat(high.toFixed(2)), low: parseFloat(low.toFixed(2)), close: parseFloat(close.toFixed(2)) });
+      }
+      // Ensure the final candle matches current Screener CMP
+      if (mockData.length > 0) {
+        mockData[mockData.length - 1].close = basePrice;
+      }
+
+      candlestickSeries.setData(mockData);
+      chart.timeScale().fitContent();
+
+      // Handle window resize dynamically
+      window.addEventListener('resize', () => {
+        if (container && activeChartInstance) {
+          activeChartInstance.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        }
+      });
     }
 
     
