@@ -556,97 +556,114 @@
 
     let activeChartInstance = null;
 
-    function loadTradingViewWidget(symbol, interval) {
+    async function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
       container.style.height = '420px';
       
-      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:420px; position:relative; background:#131722;"></div>`;
+      // 1. Show a beautiful loading state while fetching real data
+      container.innerHTML = `
+        <div id="tv_canvas_wrapper" style="width:100%; height:420px; position:relative; background:#131722; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <svg class="animate-spin h-8 w-8 text-emerald-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <div class="text-xs text-slate-400 font-semibold animate-pulse tracking-wide">Fetching Real Market History...</div>
+        </div>
+      `;
 
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
       let currentStock = stockData[cleanSymbol] || stockData[symbol] || { price: 1000 };
       let basePrice = currentStock.price || 1000;
 
       if (activeChartInstance) {
-        try {
-          activeChartInstance.remove();
-        } catch(e) {}
+        try { activeChartInstance.remove(); } catch(e) {}
         activeChartInstance = null;
       }
 
-      // Generate smooth 90-day market trend leading to Screener CMP
+      // 2. Fetch REAL Historical OHLC Data securely
       let candleData = [];
-      let days = 90;
-      let startPrice = basePrice * 0.82;
-      let currentVal = startPrice;
-
-      for (let i = 0; i < days; i++) {
-        let progress = i / days;
-        let targetPull = (basePrice - currentVal) * (1 - Math.pow(1 - progress, 2));
-        let noise = (Math.random() - 0.49) * (basePrice * 0.015);
+      try {
+        // Using range=6mo completely prevents the timestamp bugs that caused the 500 errors!
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanSymbol}.NS?range=6mo&interval=1d`;
         
-        let open = currentVal;
-        let close = open + (targetPull / (days - i + 1)) + noise;
-        let high = Math.max(open, close) + Math.random() * (basePrice * 0.008);
-        let low = Math.min(open, close) - Math.random() * (basePrice * 0.008);
+        // /raw directly returns the JSON with proper CORS headers
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
         
-        currentVal = close;
+        const res = await fetch(proxyUrl);
+        if (res.ok) {
+          const chartJson = await res.json();
+          if (chartJson.chart && chartJson.chart.result && chartJson.chart.result.length > 0) {
+            const result = chartJson.chart.result[0];
+            const timestamps = result.timestamp;
+            const quotes = result.indicators.quote[0];
 
-        let d = new Date();
-        d.setDate(d.getDate() - (days - i));
-        let timeStr = d.toISOString().split('T')[0];
-
-        candleData.push({
-          time: timeStr,
-          open: parseFloat(open.toFixed(2)),
-          high: parseFloat(high.toFixed(2)),
-          low: parseFloat(low.toFixed(2)),
-          close: parseFloat(close.toFixed(2))
-        });
+            for (let i = 0; i < timestamps.length; i++) {
+              // Ensure data points are valid
+              if (quotes.close[i] != null && quotes.open[i] != null) {
+                let dateStr = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
+                candleData.push({
+                  time: dateStr,
+                  open: parseFloat(quotes.open[i].toFixed(2)),
+                  high: parseFloat(quotes.high[i].toFixed(2)),
+                  low: parseFloat(quotes.low[i].toFixed(2)),
+                  close: parseFloat(quotes.close[i].toFixed(2))
+                });
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch real data:", err);
       }
 
-      if (candleData.length > 0) {
-        let last = candleData[candleData.length - 1];
-        last.close = basePrice;
-        last.high = Math.max(last.high, basePrice);
-        last.low = Math.min(last.low, basePrice);
+      // 3. Fallback just in case the user is completely offline (2 basic candles to prevent a crash)
+      if (candleData.length === 0) {
+        let d1 = new Date(); d1.setDate(d1.getDate() - 2);
+        let d2 = new Date(); d2.setDate(d2.getDate() - 1);
+        candleData.push({ time: d1.toISOString().split('T')[0], open: basePrice*0.99, high: basePrice, low: basePrice*0.98, close: basePrice*0.99 });
+        candleData.push({ time: d2.toISOString().split('T')[0], open: basePrice*0.99, high: basePrice*1.01, low: basePrice*0.99, close: basePrice });
       }
+
+      // 4. Render the final canvas container
+      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:420px; position:relative; background:#131722;"></div>`;
 
       setTimeout(() => {
         const wrapper = document.getElementById('tv_canvas_wrapper');
         if (!wrapper) return;
 
-        const chart = LightweightCharts.createChart(wrapper, {
-          width: wrapper.clientWidth || 700,
-          height: 420,
-          layout: {
-            background: { type: 'solid', color: '#131722' },
-            textColor: '#94a3b8',
-          },
-          grid: {
-            vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
-            horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
-          },
-          timeScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-          },
-          rightPriceScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-          },
-        });
+        try {
+          const chart = LightweightCharts.createChart(wrapper, {
+            width: wrapper.clientWidth || 700,
+            height: 420,
+            layout: {
+              background: { type: 'solid', color: '#131722' },
+              textColor: '#94a3b8',
+            },
+            grid: {
+              vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+              horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+            },
+            timeScale: {
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            },
+            rightPriceScale: {
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          });
 
-        activeChartInstance = chart;
+          activeChartInstance = chart;
 
-        const candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-          upColor: '#10b981',
-          downColor: '#f43f5e',
-          borderVisible: false,
-          wickUpColor: '#10b981',
-          wickDownColor: '#f43f5e',
-        });
+          const candlestickSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+            upColor: '#10b981',
+            downColor: '#f43f5e',
+            borderVisible: false,
+            wickUpColor: '#10b981',
+            wickDownColor: '#f43f5e',
+          });
 
-        candlestickSeries.setData(candleData);
-        chart.timeScale().fitContent();
-      }, 60);
+          candlestickSeries.setData(candleData);
+          chart.timeScale().fitContent();
+        } catch (err) {
+          console.error("Canvas render error:", err);
+        }
+      }, 50);
     }
     
     function saveCustomizations(addedItem = null, deletedSym = null) {
