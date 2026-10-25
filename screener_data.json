@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-25 09:10:44 UTC",
+  "lastUpdated": "2026-10-25 16:36:07 UTC",
   "total": 31,
   "stocks": {
     "BALUFORGE": {
@@ -13,9 +13,9 @@
       "roe": 19.6,
       "marketCap": 5123.0,
       "bookValue": 131.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 667.0,
+      "low52": 341.0,
+      "opm": 28.0
     },
     "DATAPATTNS": {
       "symbol": "DATAPATTNS",
@@ -43,9 +43,9 @@
       "roe": 27.4,
       "marketCap": 264614.0,
       "bookValue": 32.8,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 473.0,
+      "low52": 355.0,
+      "opm": 25.0
     },
     "MAZDOCK": {
       "symbol": "MAZDOCK",
@@ -58,9 +58,9 @@
       "roe": 29.2,
       "marketCap": 75029.0,
       "bookValue": 242.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 2883.0,
+      "low52": 1845.0,
+      "opm": 15.0
     },
     "COCHINSHIP": {
       "symbol": "COCHINSHIP",
@@ -73,9 +73,9 @@
       "roe": 12.5,
       "marketCap": 29989.0,
       "bookValue": 223.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 1844.0,
+      "low52": 1126.0,
+      "opm": 18.0
     },
     "ULTRACEMCO": {
       "symbol": "ULTRACEMCO",
@@ -88,9 +88,9 @@
       "roe": 11.1,
       "marketCap": 325620.0,
       "bookValue": 2497.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 13110.0,
+      "low52": 10325.0,
+      "opm": 16.0
     },
     "APOLLOHOSP": {
       "symbol": "APOLLOHOSP",
@@ -103,9 +103,9 @@
       "roe": 21.2,
       "marketCap": 111146.0,
       "bookValue": 659.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 9327.0,
+      "low52": 6680.0,
+      "opm": 16.0
     },
     "TCS": {
       "symbol": "TCS",
@@ -118,9 +118,9 @@
       "roe": 51.8,
       "marketCap": 915376.0,
       "bookValue": 329.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 3350.0,
+      "low52": 1976.0,
+      "opm": 26.0
     },
     "INFY": {
       "symbol": "INFY",
@@ -133,9 +133,9 @@
       "roe": 31.9,
       "marketCap": 468244.0,
       "bookValue": 244.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 1728.0,
+      "low52": 980.0,
+      "opm": 24.0
     },
     "ITC": {
       "symbol": "ITC",
@@ -148,9 +148,9 @@
       "roe": 29.3,
       "marketCap": 323198.0,
       "bookValue": 57.9,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 426.0,
+      "low52": 253.0,
+      "opm": 27.0
     },
     "RELIANCE": {
       "symbol": "RELIANCE",
@@ -163,9 +163,9 @@
       "roe": 8.91,
       "marketCap": 1610372.0,
       "bookValue": 668.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 1612.0,
+      "low52": 1152.0,
+      "opm": 15.0
     },
     "HDFCBANK": {
       "symbol": "HDFCBANK",
@@ -178,8 +178,8 @@
       "roe": 13.6,
       "marketCap": 1068834.0,
       "bookValue": 391.0,
-      "high52": 0.0,
-      "low52": 0.0,
+      "high52": 1018.0,
+      "low52": 682.0,
       "opm": 0.0
     },
     "ICICIBANK": {
@@ -193,8 +193,8 @@
       "roe": 15.9,
       "marketCap": 1001024.0,
       "bookValue": 540.0,
-      "high52": 0.0,
-      "low52": 0.0,
+      "high52": 1480.0,
+      "low52": 1188.0,
       "opm": 0.0
     },
     "AXISBANK": {
@@ -208,8 +208,8 @@
       "roe": 13.1,
       "marketCap": 379119.0,
       "bookValue": 738.0,
-      "high52": 0.0,
-      "low52": 0.0,
+      "high52": 1418.0,
+      "low52": 1150.0,
       "opm": 0.0
     },
     "KOTAKBANK": {
@@ -223,8 +223,8 @@
       "roe": 11.4,
       "marketCap": 428256.0,
       "bookValue": 196.0,
-      "high52": 0.0,
-      "low52": 0.0,
+      "high52": 453.0,
+      "low52": 345.0,
       "opm": 0.0
     },
     "LT": {
@@ -238,9 +238,9 @@
       "roe": 15.9,
       "marketCap": 501789.0,
       "bookValue": 794.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 4440.0,
+      "low52": 3288.0,
+      "opm": 12.0
     },
     "TITAN": {
       "symbol": "TITAN",
@@ -253,9 +253,9 @@
       "roe": 37.7,
       "marketCap": 381721.0,
       "bookValue": 177.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 5187.0,
+      "low52": 3667.0,
+      "opm": 14.0
     },
     "ASIANPAINT": {
       "symbol": "ASIANPAINT",
@@ -268,9 +268,9 @@
       "roe": 21.8,
       "marketCap": 221287.0,
       "bookValue": 223.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 2986.0,
+      "low52": 2115.0,
+      "opm": 21.0
     },
     "HINDUNILVR": {
       "symbol": "HINDUNILVR",
@@ -283,9 +283,9 @@
       "roe": 31.0,
       "marketCap": 426380.0,
       "bookValue": 207.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 2480.0,
+      "low52": 1781.0,
+      "opm": 23.0
     },
     "SUNPHARMA": {
       "symbol": "SUNPHARMA",
@@ -298,9 +298,9 @@
       "roe": 16.0,
       "marketCap": 419404.0,
       "bookValue": 348.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 2048.0,
+      "low52": 1584.0,
+      "opm": 29.0
     },
     "BAJFINANCE": {
       "symbol": "BAJFINANCE",
@@ -313,8 +313,8 @@
       "roe": 18.2,
       "marketCap": 578360.0,
       "bookValue": 198.0,
-      "high52": 0.0,
-      "low52": 0.0,
+      "high52": 1178.0,
+      "low52": 788.0,
       "opm": 0.0
     },
     "MARUTI": {
@@ -328,9 +328,9 @@
       "roe": 14.3,
       "marketCap": 353074.0,
       "bookValue": 3408.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 17372.0,
+      "low52": 10984.0,
+      "opm": 8.0
     },
     "NESTLEIND": {
       "symbol": "NESTLEIND",
@@ -343,9 +343,9 @@
       "roe": 74.2,
       "marketCap": 226577.0,
       "bookValue": 30.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 1553.0,
+      "low52": 1156.0,
+      "opm": 24.0
     },
     "TATAMOTORS": {
       "symbol": "TATAMOTORS",
@@ -373,9 +373,9 @@
       "roe": 11.7,
       "marketCap": 209311.0,
       "bookValue": 81.8,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 224.0,
+      "low52": 160.0,
+      "opm": 15.0
     },
     "NTPC": {
       "symbol": "NTPC",
@@ -388,9 +388,9 @@
       "roe": 15.1,
       "marketCap": 288961.0,
       "bookValue": 210.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 414.0,
+      "low52": 292.0,
+      "opm": 32.0
     },
     "POWERGRID": {
       "symbol": "POWERGRID",
@@ -403,9 +403,9 @@
       "roe": 15.3,
       "marketCap": 230097.0,
       "bookValue": 108.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 325.0,
+      "low52": 242.0,
+      "opm": 82.0
     },
     "ONGC": {
       "symbol": "ONGC",
@@ -418,9 +418,9 @@
       "roe": 11.6,
       "marketCap": 286201.0,
       "bookValue": 296.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 308.0,
+      "low52": 218.0,
+      "opm": 8.0
     },
     "COALINDIA": {
       "symbol": "COALINDIA",
@@ -433,9 +433,9 @@
       "roe": 28.2,
       "marketCap": 244938.0,
       "bookValue": 193.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 491.0,
+      "low52": 370.0,
+      "opm": 26.0
     },
     "SBIN": {
       "symbol": "SBIN",
@@ -448,8 +448,8 @@
       "roe": 15.4,
       "marketCap": 884861.0,
       "bookValue": 674.0,
-      "high52": 0.0,
-      "low52": 0.0,
+      "high52": 1235.0,
+      "low52": 906.0,
       "opm": 0.0
     },
     "BHARTIARTL": {
@@ -463,9 +463,9 @@
       "roe": 20.3,
       "marketCap": 1180976.0,
       "bookValue": 245.0,
-      "high52": 0.0,
-      "low52": 0.0,
-      "opm": 0.0
+      "high52": 2175.0,
+      "low52": 1726.0,
+      "opm": 57.0
     }
   }
 }
