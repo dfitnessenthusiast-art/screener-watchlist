@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
-  <!-- ONLY keep the Lightweight Charts Library (HTML5 Canvas) -->
+  <!-- Lightweight Charts Library (HTML5 Canvas) -->
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
   
   <title>AlphaWatch • Screener & Dual TradingView Charts</title>
@@ -18,8 +18,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- (DO NOT include tv.js here) -->
 
   <style>
     body {
@@ -213,18 +211,18 @@
     </main>
   </div>
 
-  <!-- TradingView Quick-View Modal (15m Delayed Embedded Widget + Direct Zero-Delay Launch Button) -->
+  <!-- TradingView Quick-View Modal -->
   <div id="chart-modal" class="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6 bg-slate-950/85 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-4xl h-[86vh] md:h-[82vh] flex flex-col rounded-3xl border border-slate-700 shadow-2xl overflow-hidden animate-in fade-in duration-200">
       
       <!-- Chart Modal Header -->
       <div class="px-3.5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-900/95">
         <div class="flex items-center space-x-2.5">
-          <div class="w-2.5 h-2.5 rounded-full bg-amber-400" title="15m Delayed Embed Mode"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400" title="Canvas Chart Active"></div>
           <div>
             <div class="flex items-center gap-1.5">
               <span id="chart-stock-symbol" class="text-sm md:text-base font-bold text-white mono">BALUFORGE</span>
-              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">Quick View (15m)</span>
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Quick View</span>
             </div>
             <p id="chart-stock-name" class="text-[11px] text-slate-400 truncate max-w-[160px] md:max-w-sm">Balu Forge Industries</p>
           </div>
@@ -250,13 +248,13 @@
       </div>
 
       <!-- TradingView Widget Target Container -->
-<div class="w-full relative bg-[#131722]" style="height: 420px;" id="tradingview_widget_container">
+      <div class="w-full relative bg-[#131722]" style="height: 420px;" id="tradingview_widget_container">
         <!-- Chart widget rendered here -->
       </div>
 
       <!-- Modal Bottom Helper Bar -->
       <div class="px-4 py-2 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-        <span>Embedded widget has standard 15m NSE delay.</span>
+        <span>Lightweight Canvas Chart Engine</span>
         <a id="modal-bottom-tv-link" href="https://www.tradingview.com/chart/?symbol=NSE:BALUFORGE" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 font-semibold underline">
           Open Authenticated Zero-Delay Chart ↗
         </a>
@@ -462,7 +460,6 @@
       document.getElementById('pin-lock-screen').classList.remove('hidden');
     }
 
-    // Support keyboard numeric typing on desktop
     window.addEventListener('keydown', (e) => {
       const lockScreenVisible = !document.getElementById('pin-lock-screen').classList.contains('hidden');
       if (!lockScreenVisible) return;
@@ -534,7 +531,7 @@
       document.getElementById('modal-bottom-tv-link').href = liveUrl;
 
       document.getElementById('chart-modal').classList.remove('hidden');
-      (symbol, currentInterval);
+      loadTradingViewWidget(symbol, currentInterval); // Fixed missing function name
     }
 
     function closeChartModal() {
@@ -554,10 +551,10 @@
           }
         }
       });
-      (currentChartSymbol, interval);
+      loadTradingViewWidget(currentChartSymbol, interval); // Fixed missing function name
     }
-    
-let activeChartInstance = null;
+
+    let activeChartInstance = null;
 
     function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
@@ -570,7 +567,9 @@ let activeChartInstance = null;
       let basePrice = currentStock.price || 1000;
 
       if (activeChartInstance) {
-        activeChartInstance.remove();
+        try {
+          activeChartInstance.remove();
+        } catch(e) {}
         activeChartInstance = null;
       }
 
@@ -579,12 +578,8 @@ let activeChartInstance = null;
       let days = 90;
       let startPrice = basePrice * 0.82;
       let currentVal = startPrice;
-      let now = new Date();
-      now.setDate(now.getDate() - days);
 
       for (let i = 0; i < days; i++) {
-        now.setDate(now.getDate() + 1);
-        let timeStr = now.toISOString().split('T')[0];
         let progress = i / days;
         let targetPull = (basePrice - currentVal) * (1 - Math.pow(1 - progress, 2));
         let noise = (Math.random() - 0.49) * (basePrice * 0.015);
@@ -595,6 +590,10 @@ let activeChartInstance = null;
         let low = Math.min(open, close) - Math.random() * (basePrice * 0.008);
         
         currentVal = close;
+
+        let d = new Date();
+        d.setDate(d.getDate() - (days - i));
+        let timeStr = d.toISOString().split('T')[0];
 
         candleData.push({
           time: timeStr,
@@ -647,7 +646,7 @@ let activeChartInstance = null;
 
         candlestickSeries.setData(candleData);
         chart.timeScale().fitContent();
-      }, 50);
+      }, 60);
     }
     
     function saveCustomizations(addedItem = null, deletedSym = null) {
@@ -842,13 +841,13 @@ let activeChartInstance = null;
                     <div class="text-[10px] text-slate-500 font-medium">CMP</div>
                   </div>
 
-                  <!-- Option 1: Quick Chart (In-App 15m Popup) -->
-                  <button onclick="openChartModal('${s.symbol}', '${(s.name || '').replace(/'/g, "\'")}')" title="Quick Chart (In-App 15m)" class="p-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center active:scale-90 transition-all">
+                  <!-- Quick Chart (In-App Canvas) -->
+                  <button onclick="openChartModal('${s.symbol}', '${(s.name || '').replace(/'/g, "\'")}')" title="Quick Chart (In-App)" class="p-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center active:scale-90 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
                   </button>
 
-                  <!-- Option 2: Zero-Delay Live TradingView App/Web Launch -->
-                  <a href="${liveTvUrl}" target="_blank" rel="noopener noreferrer" title="Zero-Delay Live TradingView (App / Web)" class="p-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 flex items-center justify-center active:scale-90 transition-all">
+                  <!-- Zero-Delay Live TradingView Launch -->
+                  <a href="${liveTvUrl}" target="_blank" rel="noopener noreferrer" title="Zero-Delay Live TradingView" class="p-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 flex items-center justify-center active:scale-90 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                   </a>
 
@@ -880,16 +879,16 @@ let activeChartInstance = null;
               </div>
             </div>
 
-            <!-- Footer Dual Action Bar: Quick View (15m) + Live TV (0m) + Screener -->
+            <!-- Footer Action Bar -->
             <div class="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[11px]">
               <span class="text-slate-500">ROE: <strong class="text-slate-300">${s.roe ? s.roe + '%' : '--'}</strong></span>
               <div class="flex items-center gap-2">
                 <button onclick="openChartModal('${s.symbol}', '${(s.name || '').replace(/'/g, "\'")}')" class="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-0.5 active:opacity-75">
-                  <span>📊 Quick (15m)</span>
+                  <span>📊 Quick Chart</span>
                 </button>
                 <span class="text-slate-700">•</span>
                 <a href="${liveTvUrl}" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-0.5 active:opacity-75">
-                  <span>⚡ Live TV (0m) ↗</span>
+                  <span>⚡ Live TV ↗</span>
                 </a>
                 <span class="text-slate-700">•</span>
                 <a href="https://www.screener.in/company/${s.symbol}/consolidated/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-slate-200 font-medium active:opacity-75">
