@@ -521,17 +521,34 @@
       }
     }
 
-    function openChartModal(symbol, name) {
+function openChartModal(symbol, name) {
       currentChartSymbol = symbol;
       document.getElementById('chart-stock-symbol').innerText = symbol;
       document.getElementById('chart-stock-name').innerText = name || symbol;
 
-      const liveUrl = `https://www.tradingview.com/chart/?symbol=NSE:${symbol}`;
+      const liveUrl = `https://www.tradingview.com/chart/?symbol=NSE%3A${symbol}`;
       document.getElementById('modal-live-tv-link').href = liveUrl;
       document.getElementById('modal-bottom-tv-link').href = liveUrl;
 
       document.getElementById('chart-modal').classList.remove('hidden');
-      loadTradingViewWidget(symbol, currentInterval);
+      
+      // Render clean direct launch card inside the modal container to avoid iframe blocking
+      const container = document.getElementById('tradingview_widget_container');
+      container.innerHTML = `
+        <div class="w-full h-full flex flex-col items-center justify-center p-6 bg-[#131722] text-center">
+          <div class="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-3xl mb-4 shadow-lg shadow-emerald-500/10">
+            📈
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Live Chart for ${symbol}</h3>
+          <p class="text-xs text-slate-400 max-w-sm mb-6">
+            TradingView restricts direct iframe embedding for certain NSE equities. Tap below to launch the live unblocked interactive chart instantly.
+          </p>
+          <a href="${liveUrl}" target="_blank" rel="noopener noreferrer" class="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2">
+            <span>⚡ Open Live TradingView Chart (0-Delay)</span>
+            <span>↗</span>
+          </a>
+        </div>
+      `;
     }
 
     function closeChartModal() {
