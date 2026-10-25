@@ -560,7 +560,14 @@ function loadTradingViewWidget(symbol, interval) {
       // Clean symbol
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
       
-      // Use TradingView's official embed URL format
+      // If one of the 3 blocked stocks is clicked, open the live unblocked chart directly
+      if (cleanSymbol === "BEL" || cleanSymbol === "TITAN" || cleanSymbol === "TCS") {
+        window.open(`https://www.tradingview.com/chart/?symbol=NSE%3A${cleanSymbol}&interval=${interval}`, '_blank');
+        closeChartModal();
+        return;
+      }
+
+      // All other working stocks load normally in the embedded iframe
       const embedUrl = `https://s.tradingview.com/widgetembed/?symbol=NSE%3A${cleanSymbol}&interval=${interval}&theme=dark&style=1&locale=en&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&save_image=false`;
 
       container.innerHTML = `<iframe src="${embedUrl}" style="width:100%; height:100%; border:0;" allowtransparency="true" scrolling="no"></iframe>`;
