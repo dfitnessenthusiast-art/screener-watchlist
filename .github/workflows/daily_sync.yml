@@ -2,9 +2,8 @@ name: Screener Daily Auto-Sync
 
 on:
   schedule:
-    # 11:30 UTC = 5:00 PM IST (Mon-Fri) - Market close daily refresh
     - cron: '30 11 * * 1-5'
-  workflow_dispatch: # Allows manual click trigger anytime from GitHub Web / Mobile App
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -34,3 +33,4 @@ jobs:
           git add screener_data.json
           git commit -m "Auto-refresh screener metrics $(date -u +'%Y-%m-%d %H:%M UTC') [skip ci]" || exit 0
           git push
+  
