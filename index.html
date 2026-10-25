@@ -577,16 +577,19 @@
         activeChartInstance = null;
       }
 
-      // 2. Fetch REAL Historical OHLC Data securely
+      // 2. Fetch REAL Historical OHLC Data securely using reliable CORS bypasses
       let candleData = [];
       try {
-        // Using range=6mo completely prevents the timestamp bugs that caused the 500 errors!
         const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanSymbol}.NS?range=6mo&interval=1d`;
         
-        // /raw directly returns the JSON with proper CORS headers
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
+        // Primary proxy (corsproxy.io)
+        let res = await fetch(`https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`);
         
-        const res = await fetch(proxyUrl);
+        // Secondary fallback proxy (codetabs) if the first one fails
+        if (!res.ok) {
+          res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`);
+        }
+
         if (res.ok) {
           const chartJson = await res.json();
           if (chartJson.chart && chartJson.chart.result && chartJson.chart.result.length > 0) {
@@ -595,7 +598,6 @@
             const quotes = result.indicators.quote[0];
 
             for (let i = 0; i < timestamps.length; i++) {
-              // Ensure data points are valid
               if (quotes.close[i] != null && quotes.open[i] != null) {
                 let dateStr = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
                 candleData.push({
@@ -610,10 +612,10 @@
           }
         }
       } catch (err) {
-        console.warn("Failed to fetch real data:", err);
+        console.warn("Failed to fetch real data via proxies:", err);
       }
 
-      // 3. Fallback just in case the user is completely offline (2 basic candles to prevent a crash)
+      // 3. Last-resort offline fallback (just 2 candles to prevent a full crash)
       if (candleData.length === 0) {
         let d1 = new Date(); d1.setDate(d1.getDate() - 2);
         let d2 = new Date(); d2.setDate(d2.getDate() - 1);
