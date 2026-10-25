@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <!-- TradingView Lightweight Charts Library (HTML5 Canvas) -->
+  
+  <!-- ONLY keep the Lightweight Charts Library (HTML5 Canvas) -->
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
+  
   <title>AlphaWatch • Screener & Dual TradingView Charts</title>
   
-  <!-- iOS PWA meta tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AlphaWatch">
@@ -17,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <!-- TradingView Library -->
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  
+  <!-- (DO NOT include tv.js here) -->
 
   <style>
     body {
@@ -559,33 +560,32 @@ let activeChartInstance = null;
 
     function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
-      container.innerHTML = `<div id="tv_chart_inner" style="width:100%; height:100%;"></div>`;
+      
+      // Ensure the container has an explicit dark background and fixed height for the canvas
+      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:400px; position:relative; background:#131722;"></div>`;
 
-      // Clean symbol name
+      // Clean symbol name & get current price from your app's data
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
       let currentStock = stockData[cleanSymbol] || stockData[symbol] || { price: 1000 };
       let basePrice = currentStock.price || 1000;
 
-      // Clean up previous chart instance if any
+      // Clean up previous chart instance
       if (activeChartInstance) {
         activeChartInstance.remove();
         activeChartInstance = null;
       }
 
-      // Small timeout ensures modal DOM is fully rendered with correct client dimensions
+      // Small delay to ensure DOM layout is painted
       setTimeout(() => {
-        const innerContainer = document.getElementById('tv_chart_inner');
-        if (!innerContainer) return;
+        const wrapper = document.getElementById('tv_canvas_wrapper');
+        if (!wrapper) return;
 
-        const width = container.clientWidth || innerContainer.clientWidth || 600;
-        const height = container.clientHeight || innerContainer.clientHeight || 450;
-
-        // Create native TradingView Lightweight Canvas Chart with transparent background
-        const chart = LightweightCharts.createChart(innerContainer, {
-          width: width,
-          height: height,
+        // Create the native HTML5 Canvas Chart using TradingView's open-source library
+        const chart = LightweightCharts.createChart(wrapper, {
+          width: wrapper.clientWidth || container.clientWidth || 600,
+          height: 400,
           layout: {
-            background: { type: 'solid', color: 'transparent' },
+            background: { type: 'solid', color: '#131722' },
             textColor: '#94a3b8',
           },
           grid: {
@@ -610,25 +610,31 @@ let activeChartInstance = null;
           wickDownColor: '#f43f5e',
         });
 
-        // Generate realistic daily trend data leading up to current Screener CMP
+        // Generate clean historical candles leading up to current Screener CMP
         let mockData = [];
-        let price = basePrice * 0.85; // Start 15% lower 60 days ago
+        let price = basePrice * 0.90;
         let now = new Date();
-        now.setDate(now.getDate() - 60);
+        now.setDate(now.getDate() - 50);
 
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 50; i++) {
           now.setDate(now.getDate() + 1);
           let timeStr = now.toISOString().split('T')[0];
-          let change = (Math.random() - 0.48) * (basePrice * 0.02);
+          let variance = (Math.random() - 0.49) * (basePrice * 0.015);
           let open = price;
-          let close = open + change;
-          let high = Math.max(open, close) + Math.random() * (basePrice * 0.008);
-          let low = Math.min(open, close) - Math.random() * (basePrice * 0.008);
+          let close = open + variance;
+          let high = Math.max(open, close) + Math.random() * (basePrice * 0.005);
+          let low = Math.min(open, close) - Math.random() * (basePrice * 0.005);
           price = close;
-          mockData.push({ time: timeStr, open: parseFloat(open.toFixed(2)), high: parseFloat(high.toFixed(2)), low: parseFloat(low.toFixed(2)), close: parseFloat(close.toFixed(2)) });
+          mockData.push({ 
+            time: timeStr, 
+            open: parseFloat(open.toFixed(2)), 
+            high: parseFloat(high.toFixed(2)), 
+            low: parseFloat(low.toFixed(2)), 
+            close: parseFloat(close.toFixed(2)) 
+          });
         }
-        
-        // Ensure the final candle matches current Screener CMP
+
+        // Lock final candle to current live Screener CMP
         if (mockData.length > 0) {
           mockData[mockData.length - 1].close = basePrice;
         }
@@ -636,15 +642,7 @@ let activeChartInstance = null;
         candlestickSeries.setData(mockData);
         chart.timeScale().fitContent();
       }, 50);
-
-      // Handle window resize dynamically
-      window.addEventListener('resize', () => {
-        if (container && activeChartInstance) {
-          activeChartInstance.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-        }
-      });
     }
-
     
     function saveCustomizations(addedItem = null, deletedSym = null) {
       let currentMod = { added: {}, deleted: [] };
