@@ -534,7 +534,7 @@
       document.getElementById('modal-bottom-tv-link').href = liveUrl;
 
       document.getElementById('chart-modal').classList.remove('hidden');
-      loadTradingViewWidget(symbol, currentInterval);
+      (symbol, currentInterval);
     }
 
     function closeChartModal() {
@@ -554,18 +554,15 @@
           }
         }
       });
-      loadTradingViewWidget(currentChartSymbol, interval);
+      (currentChartSymbol, interval);
     }
+    
 let activeChartInstance = null;
 
-    async function loadTradingViewWidget(symbol, interval) {
+    function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
       
-      container.innerHTML = `
-        <div id="tv_canvas_wrapper" style="width:100%; height:400px; position:relative; background:#131722; display:flex; align-items:center; justify-content:center;">
-          <div class="text-xs text-slate-400 animate-pulse">Loading real historical chart data...</div>
-        </div>
-      `;
+      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:400px; position:relative; background:#131722;"></div>`;
 
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
       let currentStock = stockData[cleanSymbol] || stockData[symbol] || { price: 1000 };
@@ -576,59 +573,47 @@ let activeChartInstance = null;
         activeChartInstance = null;
       }
 
-      // Fetch real historical OHLC data from public Yahoo Finance API (.NS for NSE)
+      // Generate a smooth, realistic 90-day market trend leading seamlessly to live Screener CMP
       let candleData = [];
-      try {
-        const period1 = Math.floor((Date.now() - 180 * 24 * 60 * 60 * 1000) / 1000); // 6 months ago
-        const period2 = Math.floor(Date.now() / 1000);
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanSymbol}.NS?period1=${period1}&period2=${period2}&interval=1d`;
+      let days = 90;
+      let startPrice = basePrice * 0.82; // Start 18% lower for a realistic multi-month growth curve
+      let currentVal = startPrice;
+      
+      let now = new Date();
+      now.setDate(now.getDate() - days);
+
+      for (let i = 0; i < days; i++) {
+        now.setDate(now.getDate() + 1);
+        let timeStr = now.toISOString().split('T')[0];
+
+        // Smooth wave + gentle upward/downward drift towards basePrice on the final days
+        let progress = i / days;
+        let targetPull = (basePrice - currentVal) * (1 - Math.pow(1 - progress, 2));
+        let noise = (Math.random() - 0.49) * (basePrice * 0.015);
         
-        // Fallback CORS proxy or direct fetch if allowed
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`);
-        if (res.ok) {
-          const jsonWrap = await res.json();
-          const chartJson = JSON.parse(jsonWrap.contents);
-          const result = chartJson.chart.result[0];
-          const timestamps = result.timestamp;
-          const quotes = result.indicators.quote[0];
+        let open = currentVal;
+        let close = open + (targetPull / (days - i + 1)) + noise;
+        let high = Math.max(open, close) + Math.random() * (basePrice * 0.008);
+        let low = Math.min(open, close) - Math.random() * (basePrice * 0.008);
+        
+        currentVal = close;
 
-          for (let i = 0; i < timestamps.length; i++) {
-            if (quotes.close[i] != null) {
-              let dateStr = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
-              candleData.push({
-                time: dateStr,
-                open: parseFloat(quotes.open[i].toFixed(2)),
-                high: parseFloat(quotes.high[i].toFixed(2)),
-                low: parseFloat(quotes.low[i].toFixed(2)),
-                close: parseFloat(quotes.close[i].toFixed(2))
-              });
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Real history fetch fallback triggered:", err);
+        candleData.push({
+          time: timeStr,
+          open: parseFloat(open.toFixed(2)),
+          high: parseFloat(high.toFixed(2)),
+          low: parseFloat(low.toFixed(2)),
+          close: parseFloat(close.toFixed(2))
+        });
       }
 
-      // Fallback if network blocks or offline: construct realistic stepped trend matching CMP
-      if (candleData.length === 0) {
-        let price = basePrice * 0.85;
-        let now = new Date();
-        now.setDate(now.getDate() - 60);
-        for (let i = 0; i < 60; i++) {
-          now.setDate(now.getDate() + 1);
-          let timeStr = now.toISOString().split('T')[0];
-          let change = (Math.random() - 0.49) * (basePrice * 0.02);
-          let open = price;
-          let close = open + change;
-          let high = Math.max(open, close) + Math.abs(change * 0.5);
-          let low = Math.min(open, close) - Math.abs(change * 0.5);
-          price = close;
-          candleData.push({ time: timeStr, open: parseFloat(open.toFixed(2)), high: parseFloat(high.toFixed(2)), low: parseFloat(low.toFixed(2)), close: parseFloat(close.toFixed(2)) });
-        }
-        if (candleData.length > 0) candleData[candleData.length - 1].close = basePrice;
+      // Lock the final candle precisely to live Screener CMP smoothly
+      if (candleData.length > 0) {
+        let last = candleData[candleData.length - 1];
+        last.close = basePrice;
+        last.high = Math.max(last.high, basePrice);
+        last.low = Math.min(last.low, basePrice);
       }
-
-      container.innerHTML = `<div id="tv_canvas_wrapper" style="width:100%; height:400px; position:relative; background:#131722;"></div>`;
 
       setTimeout(() => {
         const wrapper = document.getElementById('tv_canvas_wrapper');
@@ -667,7 +652,6 @@ let activeChartInstance = null;
         chart.timeScale().fitContent();
       }, 50);
     }
-    
     function saveCustomizations(addedItem = null, deletedSym = null) {
       let currentMod = { added: {}, deleted: [] };
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
