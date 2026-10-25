@@ -557,19 +557,12 @@
 function loadTradingViewWidget(symbol, interval) {
       const container = document.getElementById('tradingview_widget_container');
       
-      // Clean symbol
+      // Clean symbol and ensure NSE prefix
       let cleanSymbol = symbol.replace("NSE:", "").replace("BSE:", "").trim();
-      
-      // For BEL, TITAN, and TCS, TradingView restricts iframe embedding. 
-      // Instantly launch their unblocked live charts in a new tab for a seamless experience:
-      if (cleanSymbol === "BEL" || cleanSymbol === "TITAN" || cleanSymbol === "TCS") {
-        window.open(`https://www.tradingview.com/chart/?symbol=NSE%3A${cleanSymbol}&interval=${interval}`, '_blank');
-        closeChartModal();
-        return;
-      }
+      let tvSymbol = `NSE:${cleanSymbol}`;
 
-      // All other working stocks load normally in the embedded modal iframe
-      const embedUrl = `https://s.tradingview.com/widgetembed/?symbol=NSE%3A${cleanSymbol}&interval=${interval}&theme=dark&style=1&locale=en&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&save_image=false`;
+      // Use TradingView's official embed URL format with explicit exchange and timezone parameters
+      const embedUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(tvSymbol)}&interval=${interval}&timezone=Asia%2FKolkata&theme=dark&style=1&locale=en&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&save_image=false`;
 
       container.innerHTML = `<iframe src="${embedUrl}" style="width:100%; height:100%; border:0;" allowtransparency="true" scrolling="no"></iframe>`;
     }
