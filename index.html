@@ -335,7 +335,8 @@
     // ======== 1. LOCAL MASTER SEARCH ENGINE (Zero API Calls = Zero Errors) ========
     async function initSearchDatabase() {
       try {
-        const res = await fetch('./search_index.json?v=' + Date.now());
+        const basePath = window.location.pathname.includes('/') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : '';
+        const res = await fetch(`${basePath}/search_index.json?v=` + Date.now());
         if (res.ok) {
           searchDatabase = await res.json();
         }
