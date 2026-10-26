@@ -50,12 +50,12 @@ def generate_search_index():
             json.dump(fallback, f)
 
 def fetch_screener_data(symbol):
-    """Scrapes financial metrics directly from Screener.in"""
+    """Scrapes financial metrics and custom RSI directly from Screener.in"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
     
-    # Use requests Session to automatically handle redirects (fixes TATAMOTORS / DATAPATTNS)
+    # Use requests Session to automatically handle redirects
     session = requests.Session()
     session.headers.update(headers)
     
@@ -97,7 +97,8 @@ def fetch_screener_data(symbol):
         "bookValue": 0.0,
         "high52": 0.0,
         "low52": 0.0,
-        "opm": 0.0
+        "opm": 0.0,
+        "rsi": 0.0
     }
 
     def clean_num(text):
@@ -107,14 +108,14 @@ def fetch_screener_data(symbol):
         except:
             return 0.0
 
-    # 1. Parse Top Ratios Ribbon
+    # 1. Parse Top Ratios Ribbon (including High/Low and custom RSI)
     ratios_list = soup.select('ul#top-ratios li')
     for li in ratios_list:
         name_elem = li.find('span', class_='name')
         if not name_elem: continue
         label = name_elem.text.strip().lower()
         
-        # High / Low fix: Find ALL spans with class 'number' inside this list item
+        # High / Low span parser fix
         if 'high / low' in label:
             num_spans = li.find_all('span', class_='number')
             if len(num_spans) >= 2:
@@ -138,15 +139,17 @@ def fetch_screener_data(symbol):
             data['price'] = val
         elif 'book value' in label:
             data['bookValue'] = val
+        elif 'rsi' in label:
+            data['rsi'] = val
 
-    # 2. Parse Sector (Usually in the breadcrumbs or tags)
+    # 2. Parse Sector
     sector_links = soup.select('.company-links a')
     for link in sector_links:
         if 'sector' in link.get('href', '').lower():
             data['sector'] = link.text.strip()
             break
 
-    # 3. Parse Latest OPM from the Quarters Table
+    # 3. Parse Latest OPM from Quarters Table
     quarters_table = soup.select_one('section#quarters table')
     if quarters_table:
         rows = quarters_table.find_all('tr')
@@ -155,11 +158,10 @@ def fetch_screener_data(symbol):
             if header and 'OPM %' in header.text:
                 cols = row.find_all('td')
                 if len(cols) > 1:
-                    # Grab the very last column's value (latest quarter)
                     data['opm'] = clean_num(cols[-1].text)
                 break
 
-    print(f"Parsed {symbol}: Price={data['price']}, H/L={data['high52']}/{data['low52']}, OPM={data['opm']}%")
+    print(f"Parsed {symbol}: Price={data['price']}, RSI={data['rsi']}, OPM={data['opm']}%")
     return data
 
 def main():
