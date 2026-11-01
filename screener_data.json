@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-31 08:37:18 UTC",
+  "lastUpdated": "2026-11-01 09:28:06 UTC",
   "total": 31,
   "stocks": {
     "BALUFORGE": {
@@ -406,14 +406,14 @@
       "sector": "",
       "note": "",
       "price": 316.0,
-      "pe": 11.0,
+      "pe": 10.3,
       "roce": 8.92,
       "roe": 15.1,
       "marketCap": 306657.0,
-      "bookValue": 210.0,
+      "bookValue": 220.0,
       "high52": 414.0,
       "low52": 292.0,
-      "opm": 32.0,
+      "opm": 29.0,
       "rsi": 0.0
     },
     "POWERGRID": {
