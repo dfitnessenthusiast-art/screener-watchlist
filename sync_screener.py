@@ -49,30 +49,31 @@ def generate_search_index():
             json.dump(fallback, f)
 
 def calculate_wilders_rsi(closes, period=14):
-    """Calculates accurate 14-day Wilder's RSI."""
+    """Calculates Wilder's RSI matching TradingView's exact smoothing standard."""
     if len(closes) < period + 1:
         return 0.0
     
-    gains = []
-    losses = []
-    for i in range(1, len(closes)):
-        diff = closes[i] - closes[i-1]
-        gains.append(max(0, diff))
-        losses.append(max(0, -diff))
-        
-    # Initial averages using simple mean for the first period
-    avg_gain = sum(gains[:period]) / period
-    avg_loss = sum(losses[:period]) / period
+    deltas = [closes[i] - closes[i-1] for i in range(1, len(closes))]
+    seed = deltas[:period]
+    up = sum([s for s in seed if s > 0]) / period
+    down = sum([-s for s in seed if s < 0]) / period
     
-    # Wilder's smoothing for subsequent periods
-    for i in range(period, len(gains)):
-        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
-        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
-        
-    if avg_loss == 0:
+    if down == 0:
         return 100.0
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
+    
+    rs = up / down
+    rsi = 100.0 - (100.0 / (1.0 + rs))
+    
+    # Wilder's smoothing continuation
+    for delta in deltas[period:]:
+        up = (up * (period - 1) + max(delta, 0)) / period
+        down = (down * (period - 1) + max(-delta, 0)) / period
+        if down == 0:
+            rsi = 100.0
+        else:
+            rs = up / down
+            rsi = 100.0 - (100.0 / (1.0 + rs))
+            
     return round(rsi, 2)
 
 def fetch_yahoo_rsi(symbol):
