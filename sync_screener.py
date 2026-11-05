@@ -44,7 +44,6 @@ def generate_search_index():
         
     except Exception as e:
         print(f"Failed to fetch NSE master list: {e}")
-        # Ensure file always exists so frontend doesn't error
         fallback = [{"sym": "BLS", "name": "BLS International Services Ltd"}, {"sym": "RELIANCE", "name": "Reliance Industries Ltd"}]
         with open("search_index.json", "w") as f:
             json.dump(fallback, f)
@@ -55,11 +54,9 @@ def fetch_screener_data(symbol):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
     
-    # Use requests Session to automatically handle redirects
     session = requests.Session()
     session.headers.update(headers)
     
-    # Try consolidated first, then standalone
     urls_to_try = [
         f"https://www.screener.in/company/{symbol}/consolidated/",
         f"https://www.screener.in/company/{symbol}/"
@@ -108,14 +105,13 @@ def fetch_screener_data(symbol):
         except:
             return 0.0
 
-    # 1. Parse Top Ratios Ribbon (including High/Low and custom RSI)
+    # 1. Parse Top Ratios Ribbon (Default metrics)
     ratios_list = soup.select('ul#top-ratios li')
     for li in ratios_list:
         name_elem = li.find('span', class_='name')
         if not name_elem: continue
         label = name_elem.text.strip().lower()
         
-        # High / Low span parser fix
         if 'high / low' in label:
             num_spans = li.find_all('span', class_='number')
             if len(num_spans) >= 2:
@@ -142,14 +138,23 @@ def fetch_screener_data(symbol):
         elif 'rsi' in label:
             data['rsi'] = val
 
-    # 2. Parse Sector
+    # 2. Universal Fallback Search for Custom RSI Metric Across the Page
+    if data['rsi'] == 0.0:
+        for li in soup.select('ul#top-ratios li, div.company-ratios li, .flex-row li'):
+            text = li.get_text().strip().lower()
+            if 'rsi' in text:
+                num_span = li.find('span', class_='number')
+                if num_span:
+                    data['rsi'] = clean_num(num_span.text)
+
+    # 3. Parse Sector
     sector_links = soup.select('.company-links a')
     for link in sector_links:
         if 'sector' in link.get('href', '').lower():
             data['sector'] = link.text.strip()
             break
 
-    # 3. Parse Latest OPM from Quarters Table
+    # 4. Parse Latest OPM from Quarters Table
     quarters_table = soup.select_one('section#quarters table')
     if quarters_table:
         rows = quarters_table.find_all('tr')
@@ -165,10 +170,8 @@ def fetch_screener_data(symbol):
     return data
 
 def main():
-    # 1. First, build the master search index for the frontend
     generate_search_index()
     
-    # 2. Then, scrape the live metrics for the 31 tracked stocks
     all_stocks = {}
     success_count = 0
 
@@ -184,7 +187,7 @@ def main():
                 "sector": "Equities",
                 "note": "Live fetch pending",
                 "price": 0.0, "pe": 0.0, "roce": 0.0, "roe": 0.0,
-                "marketCap": 0.0, "bookValue": 0.0, "high52": 0.0, "low52": 0.0, "opm": 0.0
+                "marketCap": 0.0, "bookValue": 0.0, "high52": 0.0, "low52": 0.0, "opm": 0.0, "rsi": 0.0
             }
 
     output = {
