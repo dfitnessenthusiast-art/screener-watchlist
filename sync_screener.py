@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import datetime
 import csv
 import io
+import re
 
 # List of your 31 tracked stock ticker symbols
 TICKERS = [
@@ -48,50 +49,33 @@ def generate_search_index():
         with open("search_index.json", "w") as f:
             json.dump(fallback, f)
 
-def calculate_wilders_rsi(closes, period=14):
-    """Calculates 14-day Wilder's RSI purely in Python without external heavy libraries."""
-    if len(closes) < period + 1:
-        return 0.0
-    
-    gains = []
-    losses = []
-    for i in range(1, len(closes)):
-        diff = closes[i] - closes[i-1]
-        gains.append(max(0, diff))
-        losses.append(max(0, -diff))
-        
-    avg_gain = sum(gains[:period]) / period
-    avg_loss = sum(losses[:period]) / period
-    
-    for i in range(period, len(gains)):
-        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
-        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
-        
-    if avg_loss == 0:
-        return 100.0
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
-    return round(rsi, 2)
-
-def fetch_yahoo_rsi(symbol):
-    """Fetches daily historical close prices and computes 14-day RSI."""
+def scrape_screener_rsi(soup):
+    """Scrapes the exact RSI value directly from the Screener page ratios table."""
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?interval=1d&range=2mo"
-        headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.get(url, headers=headers, timeout=10)
-        if res.status_code == 200:
-            data = res.json()
-            result = data.get('chart', {}).get('result')
-            if result:
-                closes = result[0]['indicators']['quote'][0]['close']
-                closes = [c for c in closes if c is not None]
-                return calculate_wilders_rsi(closes, 14)
+        # Check all list items in top ratios and general ratio tables
+        for li in soup.select('ul#top-ratios li, .ranges-table li, div.company-ratios li'):
+            name_elem = li.find('span', class_='name')
+            if name_elem and 'rsi' in name_elem.text.strip().lower():
+                val_elem = li.find('span', class_='number')
+                if val_elem:
+                    cleaned = val_elem.text.replace(',', '').strip()
+                    return float(cleaned)
+        
+        # Fallback text search across table cells
+        for row in soup.find_all(['tr', 'li']):
+            text = row.get_text().strip().lower()
+            if 'rsi' in text and ':' in text:
+                parts = text.split(':')
+                if len(parts) > 1:
+                    nums = re.findall(r'\d+\.\d+|\d+', parts[-1])
+                    if nums:
+                        return float(nums[0])
     except Exception as e:
-        print(f"RSI calculation error for {symbol}: {e}")
+        print(f"RSI scrape error: {e}")
     return 0.0
 
 def fetch_screener_data(symbol):
-    """Scrapes financial metrics from Screener.in and calculates RSI"""
+    """Scrapes financial metrics and exact RSI from Screener.in"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
@@ -178,8 +162,8 @@ def fetch_screener_data(symbol):
         elif 'book value' in label:
             data['bookValue'] = val
 
-    # 2. Compute 14-Day RSI automatically
-    data['rsi'] = fetch_yahoo_rsi(symbol)
+    # 2. Extract exact RSI directly from Screener page ratios
+    data['rsi'] = scrape_screener_rsi(soup)
 
     # 3. Parse Sector
     sector_links = soup.select('.company-links a')
