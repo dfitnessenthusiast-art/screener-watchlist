@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-05 14:50:53 UTC",
+  "lastUpdated": "2026-11-05 15:19:57 UTC",
   "total": 31,
   "stocks": {
     "BALUFORGE": {
@@ -16,7 +16,7 @@
       "high52": 667.0,
       "low52": 341.0,
       "opm": 28.0,
-      "rsi": 0.0
+      "rsi": 61.22
     },
     "DATAPATTNS": {
       "symbol": "DATAPATTNS",
@@ -48,7 +48,7 @@
       "high52": 473.0,
       "low52": 355.0,
       "opm": 28.0,
-      "rsi": 0.0
+      "rsi": 62.07
     },
     "MAZDOCK": {
       "symbol": "MAZDOCK",
@@ -64,7 +64,7 @@
       "high52": 2848.0,
       "low52": 1688.0,
       "opm": 8.0,
-      "rsi": 0.0
+      "rsi": 39.07
     },
     "COCHINSHIP": {
       "symbol": "COCHINSHIP",
@@ -80,7 +80,7 @@
       "high52": 1844.0,
       "low52": 1101.0,
       "opm": 18.0,
-      "rsi": 0.0
+      "rsi": 50.64
     },
     "ULTRACEMCO": {
       "symbol": "ULTRACEMCO",
@@ -96,7 +96,7 @@
       "high52": 13110.0,
       "low52": 10325.0,
       "opm": 16.0,
-      "rsi": 0.0
+      "rsi": 74.13
     },
     "APOLLOHOSP": {
       "symbol": "APOLLOHOSP",
@@ -112,7 +112,7 @@
       "high52": 9327.0,
       "low52": 6680.0,
       "opm": 16.0,
-      "rsi": 0.0
+      "rsi": 54.88
     },
     "TCS": {
       "symbol": "TCS",
@@ -128,7 +128,7 @@
       "high52": 3350.0,
       "low52": 1976.0,
       "opm": 26.0,
-      "rsi": 84.0
+      "rsi": 62.45
     },
     "INFY": {
       "symbol": "INFY",
@@ -144,7 +144,7 @@
       "high52": 1728.0,
       "low52": 980.0,
       "opm": 24.0,
-      "rsi": 0.0
+      "rsi": 58.59
     },
     "ITC": {
       "symbol": "ITC",
@@ -160,7 +160,7 @@
       "high52": 413.0,
       "low52": 253.0,
       "opm": 28.0,
-      "rsi": 0.0
+      "rsi": 65.28
     },
     "RELIANCE": {
       "symbol": "RELIANCE",
@@ -176,7 +176,7 @@
       "high52": 1612.0,
       "low52": 1152.0,
       "opm": 17.0,
-      "rsi": 0.0
+      "rsi": 67.5
     },
     "HDFCBANK": {
       "symbol": "HDFCBANK",
@@ -192,7 +192,7 @@
       "high52": 1018.0,
       "low52": 669.0,
       "opm": 0.0,
-      "rsi": 0.0
+      "rsi": 68.52
     },
     "ICICIBANK": {
       "symbol": "ICICIBANK",
@@ -208,7 +208,7 @@
       "high52": 1501.0,
       "low52": 1188.0,
       "opm": 0.0,
-      "rsi": 0.0
+      "rsi": 73.25
     },
     "AXISBANK": {
       "symbol": "AXISBANK",
@@ -224,7 +224,7 @@
       "high52": 1418.0,
       "low52": 1150.0,
       "opm": 0.0,
-      "rsi": 0.0
+      "rsi": 61.54
     },
     "KOTAKBANK": {
       "symbol": "KOTAKBANK",
@@ -240,7 +240,7 @@
       "high52": 472.0,
       "low52": 345.0,
       "opm": 0.0,
-      "rsi": 0.0
+      "rsi": 67.5
     },
     "LT": {
       "symbol": "LT",
@@ -256,7 +256,7 @@
       "high52": 4440.0,
       "low52": 3288.0,
       "opm": 11.0,
-      "rsi": 0.0
+      "rsi": 72.02
     },
     "TITAN": {
       "symbol": "TITAN",
@@ -264,7 +264,7 @@
       "sector": "",
       "note": "",
       "price": 4835.0,
-      "pe": 73.6,
+      "pe": 60.4,
       "roce": 20.5,
       "roe": 37.7,
       "marketCap": 429607.0,
@@ -272,7 +272,7 @@
       "high52": 5187.0,
       "low52": 3734.0,
       "opm": 14.0,
-      "rsi": 0.0
+      "rsi": 68.24
     },
     "ASIANPAINT": {
       "symbol": "ASIANPAINT",
@@ -288,7 +288,7 @@
       "high52": 2986.0,
       "low52": 2115.0,
       "opm": 16.0,
-      "rsi": 0.0
+      "rsi": 66.27
     },
     "HINDUNILVR": {
       "symbol": "HINDUNILVR",
@@ -304,7 +304,7 @@
       "high52": 2480.0,
       "low52": 1758.0,
       "opm": 22.0,
-      "rsi": 0.0
+      "rsi": 66.27
     },
     "SUNPHARMA": {
       "symbol": "SUNPHARMA",
@@ -320,7 +320,7 @@
       "high52": 2048.0,
       "low52": 1584.0,
       "opm": 29.0,
-      "rsi": 0.0
+      "rsi": 61.42
     },
     "BAJFINANCE": {
       "symbol": "BAJFINANCE",
@@ -336,7 +336,7 @@
       "high52": 1178.0,
       "low52": 788.0,
       "opm": 0.0,
-      "rsi": 0.0
+      "rsi": 69.47
     },
     "MARUTI": {
       "symbol": "MARUTI",
@@ -352,7 +352,7 @@
       "high52": 17372.0,
       "low52": 10984.0,
       "opm": 9.0,
-      "rsi": 0.0
+      "rsi": 69.77
     },
     "NESTLEIND": {
       "symbol": "NESTLEIND",
@@ -368,7 +368,7 @@
       "high52": 1553.0,
       "low52": 1147.0,
       "opm": 24.0,
-      "rsi": 0.0
+      "rsi": 49.04
     },
     "TATAMOTORS": {
       "symbol": "TATAMOTORS",
@@ -400,7 +400,7 @@
       "high52": 224.0,
       "low52": 160.0,
       "opm": 15.0,
-      "rsi": 0.0
+      "rsi": 58.96
     },
     "NTPC": {
       "symbol": "NTPC",
@@ -416,7 +416,7 @@
       "high52": 414.0,
       "low52": 292.0,
       "opm": 29.0,
-      "rsi": 0.0
+      "rsi": 51.37
     },
     "POWERGRID": {
       "symbol": "POWERGRID",
@@ -432,7 +432,7 @@
       "high52": 325.0,
       "low52": 242.0,
       "opm": 82.0,
-      "rsi": 0.0
+      "rsi": 54.48
     },
     "ONGC": {
       "symbol": "ONGC",
@@ -448,7 +448,7 @@
       "high52": 308.0,
       "low52": 218.0,
       "opm": 8.0,
-      "rsi": 0.0
+      "rsi": 51.91
     },
     "COALINDIA": {
       "symbol": "COALINDIA",
@@ -464,7 +464,7 @@
       "high52": 491.0,
       "low52": 370.0,
       "opm": 19.0,
-      "rsi": 0.0
+      "rsi": 41.57
     },
     "SBIN": {
       "symbol": "SBIN",
@@ -480,7 +480,7 @@
       "high52": 1235.0,
       "low52": 934.0,
       "opm": 0.0,
-      "rsi": 0.0
+      "rsi": 60.33
     },
     "BHARTIARTL": {
       "symbol": "BHARTIARTL",
@@ -496,7 +496,7 @@
       "high52": 2175.0,
       "low52": 1726.0,
       "opm": 57.0,
-      "rsi": 0.0
+      "rsi": 71.27
     }
   }
 }
