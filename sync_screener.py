@@ -5,7 +5,7 @@ import datetime
 import csv
 import io
 
-# List of your 31 tracked stock ticker symbols on Screener.in
+# List of your 31 tracked stock ticker symbols
 TICKERS = [
     "BALUFORGE", "DATAPATTNS", "BEL", "MAZDOCK", "COCHINSHIP", 
     "ULTRACEMCO", "APOLLOHOSP", "TCS", "INFY", "ITC", 
@@ -48,8 +48,50 @@ def generate_search_index():
         with open("search_index.json", "w") as f:
             json.dump(fallback, f)
 
+def calculate_wilders_rsi(closes, period=14):
+    """Calculates 14-day Wilder's RSI purely in Python without external heavy libraries."""
+    if len(closes) < period + 1:
+        return 0.0
+    
+    gains = []
+    losses = []
+    for i in range(1, len(closes)):
+        diff = closes[i] - closes[i-1]
+        gains.append(max(0, diff))
+        losses.append(max(0, -diff))
+        
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+    
+    for i in range(period, len(gains)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+        
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return round(rsi, 2)
+
+def fetch_yahoo_rsi(symbol):
+    """Fetches daily historical close prices and computes 14-day RSI."""
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?interval=1d&range=2mo"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            result = data.get('chart', {}).get('result')
+            if result:
+                closes = result[0]['indicators']['quote'][0]['close']
+                closes = [c for c in closes if c is not None]
+                return calculate_wilders_rsi(closes, 14)
+    except Exception as e:
+        print(f"RSI calculation error for {symbol}: {e}")
+    return 0.0
+
 def fetch_screener_data(symbol):
-    """Scrapes financial metrics and custom RSI directly from Screener.in"""
+    """Scrapes financial metrics from Screener.in and calculates RSI"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
@@ -105,7 +147,7 @@ def fetch_screener_data(symbol):
         except:
             return 0.0
 
-    # 1. Parse Top Ratios Ribbon (Default metrics)
+    # 1. Parse Top Ratios Ribbon
     ratios_list = soup.select('ul#top-ratios li')
     for li in ratios_list:
         name_elem = li.find('span', class_='name')
@@ -135,17 +177,9 @@ def fetch_screener_data(symbol):
             data['price'] = val
         elif 'book value' in label:
             data['bookValue'] = val
-        elif 'rsi' in label:
-            data['rsi'] = val
 
-    # 2. Universal Fallback Search for Custom RSI Metric Across the Page
-    if data['rsi'] == 0.0:
-        for li in soup.select('ul#top-ratios li, div.company-ratios li, .flex-row li'):
-            text = li.get_text().strip().lower()
-            if 'rsi' in text:
-                num_span = li.find('span', class_='number')
-                if num_span:
-                    data['rsi'] = clean_num(num_span.text)
+    # 2. Compute 14-Day RSI automatically
+    data['rsi'] = fetch_yahoo_rsi(symbol)
 
     # 3. Parse Sector
     sector_links = soup.select('.company-links a')
