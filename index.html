@@ -15,6 +15,9 @@
   <meta name="theme-color" content="#070a12">
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN for Portfolio Tab -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -149,49 +152,104 @@
       </div>
     </header>
 
-    <!-- Metrics -->
-    <section class="max-w-6xl mx-auto px-4 mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
-      <div class="glass p-3 rounded-2xl">
-        <div class="text-[11px] text-slate-400 font-medium">Balu Forge (P/E)</div>
-        <div class="text-xl font-bold text-emerald-400 mono mt-0.5" id="stat-balu-pe">19.1x</div>
-        <div class="text-[10px] text-slate-500 mt-0.5">ROCE: <span id="stat-balu-roce" class="text-slate-300">22.7%</span></div>
-      </div>
-      <div class="glass p-3 rounded-2xl">
-        <div class="text-[11px] text-slate-400 font-medium">Median Watchlist P/E</div>
-        <div class="text-xl font-bold text-white mono mt-0.5" id="stat-avg-pe">26.5x</div>
-        <div class="text-[10px] text-slate-500 mt-0.5">Across active stocks</div>
-      </div>
-      <div class="glass p-3 rounded-2xl">
-        <div class="text-[11px] text-slate-400 font-medium">High ROCE (>20%)</div>
-        <div class="text-xl font-bold text-teal-400 mono mt-0.5" id="stat-high-roce">20</div>
-        <div class="text-[10px] text-slate-500 mt-0.5">Capital compounders</div>
-      </div>
-      <div class="glass p-3 rounded-2xl">
-        <div class="text-[11px] text-slate-400 font-medium">Under Review / Wait</div>
-        <div class="text-xl font-bold text-amber-400 mono mt-0.5" id="stat-wait-count">6</div>
-        <div class="text-[10px] text-slate-500 mt-0.5">Special attention</div>
-      </div>
-    </section>
+    <!-- Tab Navigation -->
+    <div class="max-w-6xl mx-auto mt-2 px-4 flex gap-6 border-b border-slate-800/80 w-full z-30 relative">
+      <button id="tab-watchlist" onclick="switchTab('watchlist')" class="pb-3 border-b-2 border-emerald-500 text-emerald-400 text-[13px] font-bold transition-all uppercase tracking-wider">Screener Watchlist</button>
+      <button id="tab-portfolio" onclick="switchTab('portfolio')" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 text-[13px] font-bold transition-all uppercase tracking-wider">Portfolio Insights</button>
+    </div>
 
-    <div class="max-w-6xl mx-auto px-4 mt-4 flex items-center justify-between text-xs text-slate-400 w-full">
-      <span id="stock-count" class="font-medium">Showing 31 stocks</span>
-      <div class="flex items-center gap-3">
-        <button onclick="resetToDefaultPrompt()" class="text-slate-500 hover:text-slate-300 text-[11px] underline">Restore Original 31</button>
-        <div class="flex items-center gap-1.5">
-          <span>Sort:</span>
-          <select id="sort-select" onchange="render()" class="bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-emerald-500">
-            <option value="ROCE_DESC">Highest ROCE</option>
-            <option value="PE_ASC">Lowest P/E (Value)</option>
-            <option value="PRICE_DESC">Highest Price</option>
-            <option value="MCAP_DESC">Market Cap</option>
-            <option value="NAME_ASC">Name (A-Z)</option>
-          </select>
+    <!-- ==========================================
+         VIEW 1: SCREENER WATCHLIST
+         ========================================== -->
+    <div id="view-watchlist" class="w-full flex flex-col flex-1">
+      <!-- Metrics -->
+      <section class="max-w-6xl mx-auto px-4 mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+        <div class="glass p-3 rounded-2xl">
+          <div class="text-[11px] text-slate-400 font-medium">Balu Forge (P/E)</div>
+          <div class="text-xl font-bold text-emerald-400 mono mt-0.5" id="stat-balu-pe">19.1x</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">ROCE: <span id="stat-balu-roce" class="text-slate-300">22.7%</span></div>
+        </div>
+        <div class="glass p-3 rounded-2xl">
+          <div class="text-[11px] text-slate-400 font-medium">Median Watchlist P/E</div>
+          <div class="text-xl font-bold text-white mono mt-0.5" id="stat-avg-pe">26.5x</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Across active stocks</div>
+        </div>
+        <div class="glass p-3 rounded-2xl">
+          <div class="text-[11px] text-slate-400 font-medium">High ROCE (>20%)</div>
+          <div class="text-xl font-bold text-teal-400 mono mt-0.5" id="stat-high-roce">20</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Capital compounders</div>
+        </div>
+        <div class="glass p-3 rounded-2xl">
+          <div class="text-[11px] text-slate-400 font-medium">Under Review / Wait</div>
+          <div class="text-xl font-bold text-amber-400 mono mt-0.5" id="stat-wait-count">6</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Special attention</div>
+        </div>
+      </section>
+
+      <div class="max-w-6xl mx-auto px-4 mt-4 flex items-center justify-between text-xs text-slate-400 w-full">
+        <span id="stock-count" class="font-medium">Showing 31 stocks</span>
+        <div class="flex items-center gap-3">
+          <button onclick="resetToDefaultPrompt()" class="text-slate-500 hover:text-slate-300 text-[11px] underline">Restore Original 31</button>
+          <div class="flex items-center gap-1.5">
+            <span>Sort:</span>
+            <select id="sort-select" onchange="render()" class="bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+              <option value="ROCE_DESC">Highest ROCE</option>
+              <option value="PE_ASC">Lowest P/E (Value)</option>
+              <option value="PRICE_DESC">Highest Price</option>
+              <option value="MCAP_DESC">Market Cap</option>
+              <option value="NAME_ASC">Name (A-Z)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stocks Grid -->
+      <main class="max-w-6xl mx-auto px-4 mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 w-full flex-1" id="cards-container"></main>
+    </div>
+
+    <!-- ==========================================
+         VIEW 2: PORTFOLIO & INSIGHTS (Translated from React)
+         ========================================== -->
+    <div id="view-portfolio" class="hidden w-full flex-col flex-1 max-w-6xl mx-auto px-4 mt-4 pb-8">
+      <h1 class="text-2xl font-bold text-sky-400 mb-1">Portfolio & Risk/Reward Insights</h1>
+      <p id="portfolio-summary" class="text-slate-400 mb-6 text-sm">Loading portfolio valuation...</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="glass p-5 rounded-2xl border border-slate-700/60">
+          <h3 class="text-sm font-bold uppercase tracking-wider mb-4 text-sky-300">Sector Allocation</h3>
+          <div class="w-full max-w-xs mx-auto relative h-56">
+            <canvas id="sectorChart"></canvas>
+          </div>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-slate-700/60">
+          <h3 class="text-sm font-bold uppercase tracking-wider mb-4 text-sky-300">10-Year Wealth Projection</h3>
+          <div class="w-full relative h-56">
+            <canvas id="projectionChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass p-5 rounded-2xl border border-slate-700/60">
+        <h3 class="text-sm font-bold uppercase tracking-wider mb-4 text-sky-300">Live Scraped Risk Matrix</h3>
+        <div class="overflow-x-auto no-scrollbar">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400 text-[11px] uppercase tracking-wider">
+                <th class="p-3 font-semibold">Holding</th>
+                <th class="p-3 font-semibold">Stake Type</th>
+                <th class="p-3 font-semibold">Live P/E</th>
+                <th class="p-3 font-semibold">Live ROCE</th>
+                <th class="p-3 font-semibold">Live CMP</th>
+                <th class="p-3 font-semibold">Total Value</th>
+              </tr>
+            </thead>
+            <tbody id="portfolio-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-
-    <!-- Stocks Grid -->
-    <main class="max-w-6xl mx-auto px-4 mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 w-full flex-1" id="cards-container"></main>
   </div>
 
   <!-- Chart Modal -->
@@ -227,7 +285,7 @@
     </div>
   </div>
 
-  <!-- Add Stock Modal (FIXED NESTING & SEARCH) -->
+  <!-- Add Stock Modal -->
   <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-md p-5 rounded-3xl border border-slate-700 shadow-2xl relative animate-in fade-in duration-200">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -239,7 +297,7 @@
       </div>
 
       <form onsubmit="handleAddStock(event)" class="mt-4 space-y-3">
-        <!-- Flawless Local Search Field -->
+        <!-- Live Search Field -->
         <div class="relative z-50">
           <label class="block text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -293,10 +351,10 @@
           <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Add to Watchlist</button>
         </div>
       </form>
-    </div> <!-- This properly closes the Add Modal card! -->
-  </div> <!-- This properly closes the Add Modal backdrop! -->
+    </div>
+  </div>
 
-  <!-- PIN & Security Settings Modal (PROPERLY SEPARATED) -->
+  <!-- PIN & Security Settings Modal -->
   <div id="pin-settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-sm p-5 rounded-3xl border border-slate-700 shadow-2xl relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -360,7 +418,7 @@
       searchDebounceTimer = setTimeout(() => {
         const q = query.toLowerCase().trim();
         
-        // Instant local memory filter across all NSE stocks (No network requests)
+        // Instant local memory filter across all NSE stocks
         const results = searchDatabase.filter(s => 
           (s.sym && s.sym.toLowerCase().includes(q)) || 
           (s.name && s.name.toLowerCase().includes(q))
@@ -493,6 +551,7 @@
       } finally {
         if (refreshIcon) refreshIcon.classList.remove('animate-spin');
         render(); updateSummary();
+        if (portfolioChartsInitialized) renderPortfolio();
       }
     }
 
@@ -647,6 +706,123 @@
             </div>
           </div>
       `).join('');
+    }
+
+    // ======== 5. PORTFOLIO TAB LOGIC ========
+    let portfolioChartsInitialized = false;
+    let sectorChartInstance = null;
+    let projectionChartInstance = null;
+
+    // Simulated fetch of your Kite userHoldings.json
+    const userHoldings = [
+      { symbol: "TCS", name: "Tata Consultancy", quantity: 15, avg_price: 3400, sector: "IT & Tech", stake: "Solid Stake" },
+      { symbol: "ITC", name: "ITC Ltd", quantity: 150, avg_price: 210, sector: "FMCG & Food", stake: "Solid Stake" },
+      { symbol: "BALUFORGE", name: "Balu Forge", quantity: 50, avg_price: 180, sector: "Engineering", stake: "Fractional" },
+      { symbol: "RELIANCE", name: "Reliance Ind", quantity: 20, avg_price: 2400, sector: "Energy", stake: "Solid Stake" }
+    ];
+
+    function switchTab(tabId) {
+      document.getElementById('view-watchlist').classList.add('hidden');
+      document.getElementById('view-portfolio').classList.add('hidden');
+      
+      document.getElementById('tab-watchlist').className = "pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 text-[13px] font-bold transition-all uppercase tracking-wider";
+      document.getElementById('tab-portfolio').className = "pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 text-[13px] font-bold transition-all uppercase tracking-wider";
+
+      if (tabId === 'watchlist') {
+        document.getElementById('view-watchlist').classList.remove('hidden');
+        document.getElementById('view-watchlist').classList.add('flex');
+        document.getElementById('tab-watchlist').className = "pb-3 border-b-2 border-emerald-500 text-emerald-400 text-[13px] font-bold transition-all uppercase tracking-wider";
+      } else {
+        document.getElementById('view-portfolio').classList.remove('hidden');
+        document.getElementById('view-portfolio').classList.add('flex');
+        document.getElementById('tab-portfolio').className = "pb-3 border-b-2 border-sky-500 text-sky-400 text-[13px] font-bold transition-all uppercase tracking-wider";
+        if (!portfolioChartsInitialized) renderPortfolio();
+      }
+    }
+
+    function renderPortfolio() {
+      let totalValue = 0;
+      const tableBody = document.getElementById('portfolio-table-body');
+      tableBody.innerHTML = '';
+      const sectorTotals = {};
+
+      userHoldings.forEach(item => {
+        // Cross-reference with live Screener Data
+        const liveData = stockData[item.symbol] || {};
+        const livePrice = liveData.price || item.avg_price;
+        const livePE = liveData.pe || '--';
+        const liveROCE = liveData.roce || '--';
+        
+        const currentValue = item.quantity * livePrice;
+        totalValue += currentValue;
+
+        // Aggregate Sectors
+        sectorTotals[item.sector] = (sectorTotals[item.sector] || 0) + currentValue;
+
+        // Render Table Row
+        const peColor = livePE <= 25 ? 'text-emerald-400' : 'text-slate-300';
+        const roceColor = liveROCE >= 20 ? 'text-emerald-400' : 'text-slate-300';
+        const stakeStyle = item.stake === "Solid Stake" 
+            ? '<span class="px-2 py-1 rounded bg-emerald-900/50 text-emerald-300 text-[10px] font-bold border border-emerald-700/50">Solid</span>'
+            : '<span class="px-2 py-1 rounded bg-sky-900/50 text-sky-300 text-[10px] font-bold border border-sky-700/50">Fractional</span>';
+
+        tableBody.innerHTML += `
+          <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+            <td class="p-3">
+              <div class="font-bold text-white">${item.symbol}</div>
+              <div class="text-[10px] text-slate-400">${item.sector}</div>
+            </td>
+            <td class="p-3">${stakeStyle}</td>
+            <td class="p-3 font-bold mono ${peColor}">${livePE !== '--' ? livePE + 'x' : '--'}</td>
+            <td class="p-3 font-bold mono ${roceColor}">${liveROCE !== '--' ? liveROCE + '%' : '--'}</td>
+            <td class="p-3 font-bold text-slate-300 mono">₹${livePrice.toLocaleString('en-IN')}</td>
+            <td class="p-3 font-bold text-white mono">₹${currentValue.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('portfolio-summary').innerText = `Total Valuation: ₹${totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })} | Holdings: ${userHoldings.length} Counters`;
+
+      // Initialize Chart.js
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+      const sectorLabels = Object.keys(sectorTotals);
+      const sectorDataPoints = Object.values(sectorTotals);
+
+      if (sectorChartInstance) sectorChartInstance.destroy();
+      sectorChartInstance = new Chart(document.getElementById('sectorChart'), {
+        type: 'doughnut',
+        data: {
+          labels: sectorLabels,
+          datasets: [{
+            data: sectorDataPoints,
+            backgroundColor: ['#38bdf8', '#818cf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } }
+      });
+
+      const projectionLabels = ['Yr 0', 'Yr 1', 'Yr 2', 'Yr 3', 'Yr 4', 'Yr 5'];
+      const optData = projectionLabels.map((_, i) => totalValue * Math.pow(1.16, i));
+      const benchData = projectionLabels.map((_, i) => totalValue * Math.pow(1.12, i));
+
+      if (projectionChartInstance) projectionChartInstance.destroy();
+      projectionChartInstance = new Chart(document.getElementById('projectionChart'), {
+        type: 'line',
+        data: {
+          labels: projectionLabels,
+          datasets: [
+            { label: 'Optimized (16%)', data: optData, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', fill: true, tension: 0.3 },
+            { label: 'Benchmark (12%)', data: benchData, borderColor: '#94a3b8', borderDash: [5, 5], fill: false, tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { y: { display: false } } }
+      });
+
+      portfolioChartsInitialized = true;
     }
 
     // Initialize database and auth check on load
