@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
+  <!-- Lightweight Charts Library (HTML5 Canvas) -->
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
   
   <title>AlphaWatch • Screener & Dual TradingView Charts</title>
@@ -31,11 +32,13 @@
     .glass {
       background: rgba(15, 23, 42, 0.78);
       backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .glass-card {
       background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
       backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .safe-top { padding-top: max(16px, env(safe-area-inset-top)); }
@@ -52,12 +55,16 @@
 </head>
 <body class="min-h-screen safe-top safe-bottom flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
 
-  <!-- PIN LOCK SCREEN -->
+  <!-- ==========================================
+       IN-APP PIN / PASSCODE LOCK OVERLAY
+       ========================================== -->
   <div id="pin-lock-screen" class="fixed inset-0 z-[100] bg-[#070a12] flex flex-col items-center justify-center p-6 select-none">
     <div class="w-full max-w-xs flex flex-col items-center text-center">
-      <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-2xl shadow-emerald-500/30 text-slate-950 font-black text-3xl mb-4">α</div>
+      <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-2xl shadow-emerald-500/30 text-slate-950 font-black text-3xl mb-4">
+        α
+      </div>
       <h2 id="pin-title" class="text-xl font-bold text-white tracking-tight">Enter Passcode</h2>
-      <p id="pin-subtitle" class="text-xs text-slate-400 mt-1">Default PIN is <span class="mono text-emerald-400 font-semibold">1100</span></p>
+      <p id="pin-subtitle" class="text-xs text-slate-400 mt-1">Default PIN is <span class="mono text-emerald-400 font-semibold">1100</span> (or set your own)</p>
 
       <div id="pin-dots" class="flex items-center justify-center gap-4 my-7">
         <div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-600 transition-all duration-150"></div>
@@ -68,17 +75,17 @@
       <div id="pin-error" class="h-5 text-xs font-semibold text-rose-400 mb-2"></div>
 
       <div class="grid grid-cols-3 gap-4 w-full max-w-[260px]">
-        <button onclick="pressPin('1')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">1</button>
-        <button onclick="pressPin('2')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">2</button>
-        <button onclick="pressPin('3')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">3</button>
-        <button onclick="pressPin('4')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">4</button>
-        <button onclick="pressPin('5')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">5</button>
-        <button onclick="pressPin('6')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">6</button>
-        <button onclick="pressPin('7')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">7</button>
-        <button onclick="pressPin('8')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">8</button>
-        <button onclick="pressPin('9')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">9</button>
-        <button onclick="clearPin()" class="h-16 rounded-2xl bg-slate-900/50 border border-slate-800 text-xs font-semibold text-slate-400 active:bg-slate-800 transition-all">Clear</button>
-        <button onclick="pressPin('0')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all">0</button>
+        <button onclick="pressPin('1')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">1</button>
+        <button onclick="pressPin('2')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">2</button>
+        <button onclick="pressPin('3')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">3</button>
+        <button onclick="pressPin('4')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">4</button>
+        <button onclick="pressPin('5')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">5</button>
+        <button onclick="pressPin('6')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">6</button>
+        <button onclick="pressPin('7')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">7</button>
+        <button onclick="pressPin('8')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">8</button>
+        <button onclick="pressPin('9')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">9</button>
+        <button onclick="clearPin()" class="h-16 rounded-2xl bg-slate-900/50 border border-slate-800 text-xs font-semibold text-slate-400 active:bg-slate-800 transition-all flex items-center justify-center">Clear</button>
+        <button onclick="pressPin('0')" class="h-16 rounded-2xl glass-card text-xl font-bold text-white active:bg-emerald-500 active:text-slate-950 transition-all flex items-center justify-center">0</button>
         <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-900/50 border border-slate-800 text-slate-300 active:bg-slate-800 transition-all flex items-center justify-center">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
         </button>
@@ -90,10 +97,11 @@
     </div>
   </div>
 
-  <!-- MAIN APP CONTAINER -->
+  <!-- ==========================================
+       MAIN DASHBOARD CONTENT
+       ========================================== -->
   <div id="app-content" class="hidden flex-1 flex flex-col">
-    
-    <!-- HEADER -->
+    <!-- Header -->
     <header class="sticky top-0 z-40 px-4 py-3 bg-[#070a12]/92 backdrop-blur-xl border-b border-slate-800/80">
       <div class="max-w-6xl mx-auto flex items-center justify-between">
         <div class="flex items-center space-x-3">
@@ -119,8 +127,7 @@
           </button>
         </div>
       </div>
-      
-      <!-- SEARCH BAR -->
+      <!-- Search & Filters -->
       <div class="max-w-6xl mx-auto mt-3 space-y-2">
         <div class="relative">
           <input id="search-input" oninput="render()" type="text" placeholder="Search by ticker, company, note, or sector..." class="w-full px-4 py-2.5 pl-10 rounded-xl bg-slate-900/90 border border-slate-700/60 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all">
@@ -138,7 +145,7 @@
       </div>
     </header>
 
-    <!-- TABS -->
+    <!-- TABS NAVIGATION -->
     <div class="max-w-6xl mx-auto mt-2 px-4 flex gap-6 border-b border-slate-800/80 w-full z-30 relative">
       <button id="tab-watchlist" onclick="switchTab('watchlist')" class="pb-3 border-b-2 border-emerald-500 text-emerald-400 text-[13px] font-bold transition-all uppercase tracking-wider">Screener Watchlist</button>
       <button id="tab-portfolio" onclick="switchTab('portfolio')" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-300 text-[13px] font-bold transition-all uppercase tracking-wider flex items-center gap-2">
@@ -223,7 +230,7 @@
             <thead>
               <tr class="border-b border-slate-700 text-slate-400 text-[11px] uppercase tracking-wider">
                 <th class="p-3 font-semibold">Holding</th>
-                <th class="p-3 font-semibold">Avg Buy Price</th>
+                <th class="p-3 font-semibold">Qty & Avg</th>
                 <th class="p-3 font-semibold">Live CMP</th>
                 <th class="p-3 font-semibold text-right">Total Value</th>
                 <th class="p-3 font-semibold text-right">Live P&L</th>
@@ -238,7 +245,7 @@
     </div>
   </div>
 
-  <!-- CHART MODAL -->
+  <!-- Chart Modal -->
   <div id="chart-modal" class="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6 bg-slate-950/85 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-4xl h-[86vh] md:h-[82vh] flex flex-col rounded-3xl border border-slate-700 shadow-2xl overflow-hidden animate-in fade-in duration-200">
       <div class="px-3.5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-900/95">
@@ -258,10 +265,14 @@
         </div>
       </div>
       <div class="w-full relative bg-[#131722]" style="height: 420px;" id="tradingview_widget_container"></div>
+      <div class="px-4 py-2 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+        <span>Lightweight Canvas Chart Engine</span>
+        <a id="modal-bottom-tv-link" href="#" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:text-sky-300 font-semibold underline">Open Authenticated Zero-Delay Chart ↗</a>
+      </div>
     </div>
   </div>
 
-  <!-- ADD STOCK MODAL -->
+  <!-- Add Stock Modal -->
   <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-md p-5 rounded-3xl border border-slate-700 shadow-2xl relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -283,6 +294,30 @@
             <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Company Name</label>
             <input id="new-name" type="text" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
           </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Current Price (₹)</label>
+            <input id="new-price" type="number" step="any" placeholder="1050" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Stock P/E</label>
+            <input id="new-pe" type="number" step="any" placeholder="18.5" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">ROCE (%)</label>
+            <input id="new-roce" type="number" step="any" placeholder="24.0" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white mono focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Sector</label>
+            <input id="new-sector" type="text" placeholder="Chemicals / Tech / Auto" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1">Personal Note / Tag (Optional)</label>
+          <input id="new-note" type="text" placeholder="e.g. Wait for dip, Review next quarter" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm">
         </div>
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Cancel</button>
@@ -592,23 +627,27 @@
     async function fetchLivePortfolioPrices() {
       const liveDot = document.getElementById('live-dot');
       liveDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
-      document.getElementById('portfolio-summary').innerHTML = 'Fetching live market data via Yahoo Finance...';
+      document.getElementById('portfolio-summary').innerHTML = 'Fetching live market data via FMP...';
       
-      // Batch symbols to query Yahoo Finance
+      // Paste your free API key here
+      const FMP_API_KEY = "BCLdqr50bTXAjMCJfLPUMvQk4oZmDksU"; 
+      
+      // Batch all 50 symbols into one request
       const symbols = userHoldings.map(h => h.symbol + '.NS').join(',');
-      const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
+      const fmpUrl = `https://financialmodelingprep.com/api/v3/quote/${symbols}?apikey=${FMP_API_KEY}`;
 
       try {
-        const res = await fetch(proxyUrl);
+        const res = await fetch(fmpUrl);
         if (res.ok) {
           const data = await res.json();
-          if (data.quoteResponse && data.quoteResponse.result) {
-            data.quoteResponse.result.forEach(stock => {
+          if (Array.isArray(data) && data.length > 0) {
+            data.forEach(stock => {
               const cleanSym = stock.symbol.replace('.NS', '');
-              portfolioLivePrices[cleanSym] = stock.regularMarketPrice;
+              portfolioLivePrices[cleanSym] = stock.price;
             });
           }
+        } else {
+          console.warn("FMP API returned an error:", res.status);
         }
       } catch (err) {
         console.warn("Failed to fetch live portfolio prices", err);
