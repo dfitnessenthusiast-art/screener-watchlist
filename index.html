@@ -15,6 +15,7 @@
   <meta name="theme-color" content="#070a12">
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN for Portfolio Tab -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,6 +92,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
         </button>
       </div>
+
       <label class="mt-6 flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
         <input id="remember-device" type="checkbox" checked class="w-4 h-4 rounded accent-emerald-500">
         <span>Keep this iPhone unlocked permanently</span>
@@ -242,7 +244,7 @@
     </div>
   </div>
 
-  <!-- Modal Layers (Chart, Add Stock, Settings) -->
+  <!-- Chart Modal -->
   <div id="chart-modal" class="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6 bg-slate-950/85 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-4xl h-[86vh] md:h-[82vh] flex flex-col rounded-3xl border border-slate-700 shadow-2xl overflow-hidden animate-in fade-in duration-200">
       <div class="px-3.5 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-900/95">
@@ -275,6 +277,7 @@
     </div>
   </div>
 
+  <!-- Add Stock Modal -->
   <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-md p-5 rounded-3xl border border-slate-700 shadow-2xl relative animate-in fade-in duration-200">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -340,6 +343,7 @@
     </div>
   </div>
 
+  <!-- PIN Settings Modal -->
   <div id="pin-settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
     <div class="glass-card w-full max-w-sm p-5 rounded-3xl border border-slate-700 shadow-2xl relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -373,9 +377,8 @@
     let currentChartSymbol = 'BALUFORGE';
     let currentInterval = 'D';
     const LOCAL_STORAGE_KEY = 'alphawatch_custom_stocks';
-    let searchDatabase = [];
 
-    // ======== 1. LOCAL MASTER SEARCH ENGINE ========
+    // ======== 1. LOCAL SEARCH DATABASE ========
     const indianStocksDatabase = [
       { sym: "RELIANCE", name: "Reliance Industries Ltd" }, { sym: "TCS", name: "Tata Consultancy Services" },
       { sym: "HDFCBANK", name: "HDFC Bank Ltd" }, { sym: "ICICIBANK", name: "ICICI Bank Ltd" },
@@ -399,6 +402,7 @@
       { sym: "ULTRACEMCO", name: "UltraTech Cement Ltd" }, { sym: "AWL", name: "Adani Wilmar Ltd" }
     ];
 
+    let searchDebounceTimer = null;
     function onLiveSearchInput(query) {
       const dropdown = document.getElementById('search-suggestions');
       if (!query || query.trim().length < 1) {
@@ -419,7 +423,7 @@
       }
 
       dropdown.innerHTML = results.map(item => `
-        <div onclick="selectStockSuggestion('${item.sym}', '${item.name}')" class="p-3 hover:bg-slate-700 cursor-pointer flex items-center justify-between transition-all group">
+        <div onclick="selectStockSuggestion('${item.sym}', '${item.name.replace(/'/g, "\\'")}')" class="p-3 hover:bg-slate-700 cursor-pointer flex items-center justify-between transition-all group">
           <div>
             <div class="font-bold text-white text-xs group-hover:text-emerald-400 transition-colors">${item.name}</div>
             <div class="text-[10px] text-slate-400 mono mt-0.5">${item.sym} <span class="bg-slate-800 px-1 rounded ml-1 text-[9px] border border-slate-700">NSE</span></div>
@@ -574,9 +578,7 @@
           try {
             const userMod = JSON.parse(savedCustom);
             if (userMod.deleted && Array.isArray(userMod.deleted)) {
-              userMod.deleted.forEach(delSym => {
-                delete merged[delSym];
-              });
+              userMod.deleted.forEach(delSym => { delete merged[delSym]; });
             }
             if (userMod.added) {
               merged = { ...merged, ...userMod.added };
@@ -584,19 +586,13 @@
           } catch(err) {}
         }
         stockData = merged;
-        document.getElementById('last-updated').innerHTML = `
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          Auto-synced: ${json.lastUpdated || "Cloud daily"}
-        `;
+        document.getElementById('last-updated').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Auto-synced: ${json.lastUpdated || "Cloud daily"}`;
       } catch (e) {
         const savedCustom = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (savedCustom) {
           try { stockData = JSON.parse(savedCustom).added || {}; } catch (err){}
         }
-        document.getElementById('last-updated').innerHTML = `
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-          Offline cached view active
-        `;
+        document.getElementById('last-updated').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Offline cached view active`;
       } finally {
         if (refreshIcon) refreshIcon.classList.remove('animate-spin');
         render();
