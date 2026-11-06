@@ -4,109 +4,81 @@ from bs4 import BeautifulSoup
 import datetime
 import csv
 import io
+import re
 
-# List of your 31 tracked stock ticker symbols
+# Combined list of your Watchlist AND 50 Portfolio Tickers
 TICKERS = [
-    "BALUFORGE", "DATAPATTNS", "BEL", "MAZDOCK", "COCHINSHIP", 
-    "ULTRACEMCO", "APOLLOHOSP", "TCS", "INFY", "ITC", 
-    "RELIANCE", "HDFCBANK", "ICICIBANK", "AXISBANK", "KOTAKBANK",
-    "LT", "TITAN", "ASIANPAINT", "HINDUNILVR", "SUNPHARMA",
-    "BAJFINANCE", "MARUTI", "NESTLEIND", "TATAMOTORS", "TATASTEEL",
-    "NTPC", "POWERGRID", "ONGC", "COALINDIA", "SBIN", "BHARTIARTL"
+    'APOLLOHOSP', 'ARROWGREEN', 'ASIANPAINT', 'AXISBANK', 'BAJFINANCE', 
+    'BALUFORGE', 'BANKBARODA', 'BANKINDIA', 'BEL', 'BHARTIARTL', 'BLS', 
+    'BSE', 'COALINDIA', 'COCHINSHIP', 'DATAPATTNS', 'DODLA', 'DRREDDY', 
+    'EIHAHOTELS', 'FIVESTAR', 'FRONTSP', 'GOLDBEES', 'GVPIL', 'HCLTECH', 
+    'HDFCBANK', 'HERITGFOOD', 'HINDUNILVR', 'ICICIBANK', 'INFY', 'IRCTC', 
+    'ITC', 'JUNIORBEES', 'JUSTDIAL', 'KNRCON', 'KOTAKBANK', 'KPITTECH', 
+    'KRSNAA', 'LT', 'LTFOODS', 'LTM', 'M&M', 'MAHABANK', 'MARUTI', 
+    'MASTEK', 'MAZDOCK', 'NATCOPHARM', 'NATIONALUM', 'NESTLEIND', 
+    'NIFTYBEES', 'NTPC', 'ONGC', 'OSWALPUMPS', 'PFC', 'POWERGRID', 
+    'PSUBNKBEES', 'RELIANCE', 'SAGILITY', 'SBIN', 'SOUTHBANK', 'SUNPHARMA', 
+    'SWARAJENG', 'TATAMOTORS', 'TATASTEEL', 'TCS', 'TITAN', 'TMPV', 
+    'ULTRACEMCO', 'WAAREEENER', 'WAAREERTL', 'ZYDUSLIFE'
 ]
 
 def generate_search_index():
-    """Fetches the official NSE active equities list for the frontend live search dropdown."""
     print("Generating master search index from NSE...")
     stocks = []
-    
     url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
         'Accept': 'text/csv'
     }
-    
     try:
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
-        
         csv_data = csv.DictReader(io.StringIO(response.text))
         for row in csv_data:
             sym = row.get('SYMBOL', '').strip()
             name = row.get('NAME OF COMPANY', '').strip()
             if sym and name:
                 stocks.append({"sym": sym, "name": name})
-                
         with open("search_index.json", "w", encoding="utf-8") as f:
             json.dump(stocks, f, ensure_ascii=False, separators=(',', ':'))
-            
         print(f"Successfully saved {len(stocks)} stocks to search_index.json")
-        
     except Exception as e:
         print(f"Failed to fetch NSE master list: {e}")
         fallback = [{"sym": "BLS", "name": "BLS International Services Ltd"}, {"sym": "RELIANCE", "name": "Reliance Industries Ltd"}]
-        with open("search_index.json", "w", encoding="utf-8") as f:
+        with open("search_index.json", "w") as f:
             json.dump(fallback, f)
 
-def calculate_wilders_rsi(closes, period=14):
-    """Calculates Wilder's RSI matching TradingView's exact smoothing standard."""
-    if len(closes) < period + 1:
-        return 0.0
-    
-    deltas = [closes[i] - closes[i-1] for i in range(1, len(closes))]
-    seed = deltas[:period]
-    up = sum([s for s in seed if s > 0]) / period
-    down = sum([-s for s in seed if s < 0]) / period
-    
-    if down == 0:
-        return 100.0
-    
-    rs = up / down
-    rsi = 100.0 - (100.0 / (1.0 + rs))
-    
-    # Wilder's smoothing continuation
-    for delta in deltas[period:]:
-        up = (up * (period - 1) + max(delta, 0)) / period
-        down = (down * (period - 1) + max(-delta, 0)) / period
-        if down == 0:
-            rsi = 100.0
-        else:
-            rs = up / down
-            rsi = 100.0 - (100.0 / (1.0 + rs))
-            
-    return round(rsi, 2)
-
-def fetch_yahoo_rsi(symbol):
-    """Fetches daily historical close prices and computes 14-day RSI."""
+def scrape_screener_rsi(soup):
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?interval=1d&range=3mo"
-        headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.get(url, headers=headers, timeout=10)
-        if res.status_code == 200:
-            data = res.json()
-            result = data.get('chart', {}).get('result')
-            if result:
-                closes = result[0]['indicators']['quote'][0]['close']
-                closes = [c for c in closes if c is not None]
-                return calculate_wilders_rsi(closes, 14)
+        for li in soup.select('ul#top-ratios li, .ranges-table li, div.company-ratios li'):
+            name_elem = li.find('span', class_='name')
+            if name_elem and 'rsi' in name_elem.text.strip().lower():
+                val_elem = li.find('span', class_='number')
+                if val_elem:
+                    cleaned = val_elem.text.replace(',', '').strip()
+                    return float(cleaned)
+        for row in soup.find_all(['tr', 'li']):
+            text = row.get_text().strip().lower()
+            if 'rsi' in text and ':' in text:
+                parts = text.split(':')
+                if len(parts) > 1:
+                    nums = re.findall(r'\d+\.\d+|\d+', parts[-1])
+                    if nums:
+                        return float(nums[0])
     except Exception as e:
-        print(f"RSI calculation error for {symbol}: {e}")
+        print(f"RSI scrape error: {e}")
     return 0.0
 
 def fetch_screener_data(symbol):
-    """Scrapes fundamentals from Screener.in and calculates precise 14-day RSI"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
-    
     session = requests.Session()
     session.headers.update(headers)
-    
     urls_to_try = [
         f"https://www.screener.in/company/{symbol}/consolidated/",
         f"https://www.screener.in/company/{symbol}/"
     ]
-    
     response = None
     for url in urls_to_try:
         try:
@@ -116,31 +88,19 @@ def fetch_screener_data(symbol):
                 break
         except requests.exceptions.RequestException:
             continue
-            
     if not response or response.status_code != 200:
         print(f"Failed to fetch {symbol}")
         return None
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    
     name_elem = soup.find('h1', class_='margin-0')
     company_name = name_elem.text.strip() if name_elem else symbol
 
     data = {
-        "symbol": symbol,
-        "name": company_name,
-        "sector": "",
-        "note": "",
-        "price": 0.0,
-        "pe": 0.0,
-        "roce": 0.0,
-        "roe": 0.0,
-        "marketCap": 0.0,
-        "bookValue": 0.0,
-        "high52": 0.0,
-        "low52": 0.0,
-        "opm": 0.0,
-        "rsi": 0.0
+        "symbol": symbol, "name": company_name, "sector": "", "note": "",
+        "price": 0.0, "pe": 0.0, "roce": 0.0, "roe": 0.0,
+        "marketCap": 0.0, "bookValue": 0.0, "high52": 0.0, "low52": 0.0,
+        "opm": 0.0, "rsi": 0.0
     }
 
     def clean_num(text):
@@ -150,48 +110,35 @@ def fetch_screener_data(symbol):
         except:
             return 0.0
 
-    # 1. Parse Top Ratios Ribbon
     ratios_list = soup.select('ul#top-ratios li')
     for li in ratios_list:
         name_elem = li.find('span', class_='name')
         if not name_elem: continue
         label = name_elem.text.strip().lower()
-        
         if 'high / low' in label:
             num_spans = li.find_all('span', class_='number')
             if len(num_spans) >= 2:
                 data['high52'] = clean_num(num_spans[0].text)
                 data['low52'] = clean_num(num_spans[1].text)
             continue
-            
         val_elem = li.find('span', class_='number')
         if not val_elem: continue
         val = clean_num(val_elem.text)
 
-        if 'market cap' in label:
-            data['marketCap'] = val
-        elif 'stock p/e' in label or label == 'p/e':
-            data['pe'] = val
-        elif 'roce' in label:
-            data['roce'] = val
-        elif 'roe' in label:
-            data['roe'] = val
-        elif 'current price' in label:
-            data['price'] = val
-        elif 'book value' in label:
-            data['bookValue'] = val
+        if 'market cap' in label: data['marketCap'] = val
+        elif 'stock p/e' in label or label == 'p/e': data['pe'] = val
+        elif 'roce' in label: data['roce'] = val
+        elif 'roe' in label: data['roe'] = val
+        elif 'current price' in label: data['price'] = val
+        elif 'book value' in label: data['bookValue'] = val
 
-    # 2. Compute 14-Day RSI automatically
-    data['rsi'] = fetch_yahoo_rsi(symbol)
-
-    # 3. Parse Sector
+    data['rsi'] = scrape_screener_rsi(soup)
     sector_links = soup.select('.company-links a')
     for link in sector_links:
         if 'sector' in link.get('href', '').lower():
             data['sector'] = link.text.strip()
             break
-
-    # 4. Parse Latest OPM from Quarters Table
+            
     quarters_table = soup.select_one('section#quarters table')
     if quarters_table:
         rows = quarters_table.find_all('tr')
@@ -208,10 +155,8 @@ def fetch_screener_data(symbol):
 
 def main():
     generate_search_index()
-    
     all_stocks = {}
     success_count = 0
-
     for symbol in TICKERS:
         stock_data = fetch_screener_data(symbol)
         if stock_data and stock_data['price'] > 0:
@@ -219,23 +164,17 @@ def main():
             success_count += 1
         else:
             all_stocks[symbol] = {
-                "symbol": symbol,
-                "name": symbol,
-                "sector": "Equities",
-                "note": "Live fetch pending",
+                "symbol": symbol, "name": symbol, "sector": "Equities", "note": "Live fetch pending",
                 "price": 0.0, "pe": 0.0, "roce": 0.0, "roe": 0.0,
                 "marketCap": 0.0, "bookValue": 0.0, "high52": 0.0, "low52": 0.0, "opm": 0.0, "rsi": 0.0
             }
-
     output = {
         "lastUpdated": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
         "total": len(TICKERS),
         "stocks": all_stocks
     }
-
     with open("screener_data.json", "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
-    
     print(f"Sync complete. Updated {success_count}/{len(TICKERS)} stocks.")
 
 if __name__ == "__main__":
