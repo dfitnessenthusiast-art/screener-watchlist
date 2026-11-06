@@ -2,7 +2,8 @@ name: Screener Daily Auto-Sync
 
 on:
   schedule:
-    - cron: '30 2 * * *' # Runs daily at 2:30 AM UTC (8:00 AM IST)
+    # Runs every 15 mins between 3:00 AM and 10:59 AM UTC (8:30 AM - 4:30 PM IST), Mon-Fri
+    - cron: '*/15 3-10 * * 1-5'
   workflow_dispatch:
 
 permissions:
